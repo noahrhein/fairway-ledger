@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body {
+  background: #0b1330;
+  color: #f4f5fb;
+  -webkit-font-smoothing: antialiased;
+}
+body {
+  font-family: Inter, system-ui, -apple-system, sans-serif;
+  background-image: radial-gradient(1100px 500px at 50% -150px, #1a2353 0%, #0b1330 60%);
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+.eyebrow { @apply text-[11px] font-medium tracking-[0.18em] uppercase text-ink-muted; }
+
+.btn { @apply inline-flex items-center justify-center rounded-full px-5 py-3.5 text-sm font-medium transition; }
+.btn-primary { @apply btn bg-ink text-bg hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed; }
+.btn-accent { @apply btn bg-accent text-bg hover:bg-accent-dim disabled:opacity-40 disabled:cursor-not-allowed; }
+.btn-secondary { @apply btn border border-line bg-white/[0.03] text-ink hover:bg-white/[0.06]; }
+.btn-ghost { @apply btn text-ink-muted hover:text-ink; }
+
+.card { @apply bg-bg-elevated border border-line rounded-2xl p-4; }
+.card-hero {
+  @apply rounded-3xl p-6 border border-line/60 relative overflow-hidden;
+  background-image: linear-gradient(160deg, #1c2657 0%, #0d1432 100%);
+}
+
+.input {
+  @apply w-full rounded-xl border border-line bg-white/[0.03] px-3 py-2.5 text-ink placeholder:text-ink-faint outline-none transition;
+}
+.input:focus { @apply border-accent/60 bg-white/[0.05]; }
+.label { @apply block text-xs font-medium text-ink-muted mb-1.5 uppercase tracking-wider; }
+
+/* segmented pill */
+.seg-group {
+  @apply flex items-center gap-1 p-1 rounded-full bg-white/[0.05] border border-line;
+}
+.seg {
+  @apply flex-1 rounded-full py-2.5 text-sm font-medium text-ink-muted transition;
+}
+.seg-active { @apply bg-ink text-bg; }
+
+/* transaction-style row */
+.row {
+  @apply flex items-center gap-3 py-3;
+}
+.row-icon {
+  @apply shrink-0 w-11 h-11 rounded-full flex items-center justify-center text-base bg-white/[0.06] border border-line;
+}
+
+input[type="date"] { color-scheme: dark; }
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input[type="number"] { -moz-appearance: textfield; }

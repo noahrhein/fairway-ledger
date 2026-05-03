@@ -1,0 +1,220 @@
+'use client';
+
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { saveRound } from '../../../lib/storage';
+import { findOrCreateByName, getFriends, saveFriend } from '../../../lib/friends';
+import type { BetFormat, Friend, Player, Round } from '../../../types';
+import { YOU_ID } from '../../../types';
+
+type FormatType = 'nassau' | 'skins' | 'wolf';
+type Slot = { friendId: string | null; name: string; venmo: string };
+
+export default function NewRoundPage() {
+  const router = useRouter();
+  const [course, setCourse] = useState('');
+  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [friends, setFriends] = useState<Friend[]>([]);
+  const [slots, setSlots] = useState<Slot[]>([
+    { friendId: YOU_ID, name: 'You', venmo: '' },
+    { friendId: null, name: '', venmo: '' },
+  ]);
+  const [pickerFor, setPickerFor] = useState<number | null>(null);
+  const [formatType, setFormatType] = useState<FormatType>('nassau');
+  const [nassauStakes, setNassauStakes] = useState({ f9: 5, b9: 5, total: 10 });
+  const [skinsStake, setSkinsStake] = useState(2);
+  const [wolfStake, setWolfStake] = useState(1);
+
+  useEffect(() => {
+    const list = getFriends();
+    setFriends(list);
+    const you = list.find((f) => f.id === YOU_ID);
+    if (you) {
+      setSlots((s) => s.map((slot, i) => (i === 0 ? { friendId: YOU_ID, name: you.name, venmo: you.venmoHandle ?? '' } : slot)));
+    }
+  }, []);
+
+  const canSubmit =
+    course.trim().length > 0 &&
+    slots.length >= 2 &&
+    slots.every((s) => s.name.trim().length > 0) &&
+    new Set(slots.map((s) => s.name.trim().toLowerCase())).size === slots.length;
+
+  function updateSlot(i: number, patch: Partial<Slot>) {
+    setSlots((arr) => arr.map((s, idx) => (idx === i ? { ...s, ...patch } : s)));
+  }
+  function addSlot() {
+    if (slots.length < 4) setSlots((s) => [...s, { friendId: null, name: '', venmo: '' }]);
+  }
+  function removeSlot(i: number) {
+    if (i === 0) return;
+    setSlots((s) => s.filter((_, idx) => idx !== i));
+  }
+
+  function pickFriend(slotIdx: number, friend: Friend) {
+    updateSlot(slotIdx, { friendId: friend.id, name: friend.name, venmo: friend.venmoHandle ?? '' });
+    setPickerFor(null);
+  }
+
+  function buildFormat(): BetFormat {
+    if (formatType === 'nassau') return { type: 'nassau', stakes: nassauStakes };
+    if (formatType === 'skins') return { type: 'skins', stakePerSkin: skinsStake };
+    return { type: 'wolf', stakePerPoint: wolfStake };
+  }
+
+  function handleCreate() {
+    const players: Player[] = slots.map((s, i) => {
+      if (i === 0) {
+        const youFriend: Friend = {
+          id: YOU_ID,
+          name: s.name.trim(),
+          venmoHandle: s.venmo.trim() || undefined,
+          createdAt: new Date().toISOString(),
+        };
+        saveFriend(youFriend);
+        return { id: YOU_ID, name: youFriend.name, venmoHandle: youFriend.venmoHandle };
+      }
+      const friend = s.friendId
+        ? { id: s.friendId, name: s.name.trim(), venmoHandle: s.venmo.trim() || undefined, createdAt: new Date().toISOString() }
+        : findOrCreateByName(s.name, s.venmo);
+      if (s.friendId) saveFriend(friend);
+      return { id: friend.id, name: friend.name, venmoHandle: friend.venmoHandle };
+    });
+
+    const round: Round = {
+      id: crypto.randomUUID(),
+      date: new Date(date).toISOString(),
+      course: course.trim(),
+      players,
+      format: buildFormat(),
+      settled: false,
+      createdAt: new Date().toISOString(),
+    };
+    saveRound(round);
+    router.push(`/round/${round.id}`);
+  }
+
+  const usedIds = new Set(slots.map((s) => s.friendId).filter(Boolean) as string[]);
+  const availableFriends = friends.filter((f) => f.id !== YOU_ID && !usedIds.has(f.id));
+
+  return (
+    <main className="space-y-6">
+      <header>
+        <Link href="/" className="btn-ghost -ml-3 mb-1 px-3 py-2">← Home</Link>
+        <h1 className="text-3xl font-medium tracking-tight">New round</h1>
+      </header>
+
+      <section className="space-y-3">
+        <div>
+          <label className="label">Course</label>
+          <input className="input" value={course} onChange={(e) => setCourse(e.target.value)} placeholder="Pebble Beach" />
+        </div>
+        <div>
+          <label className="label">Date</label>
+          <input type="date" className="input" value={date} onChange={(e) => setDate(e.target.value)} />
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="eyebrow">Players</h2>
+          {slots.length < 4 && (
+            <button onClick={addSlot} className="text-xs text-accent hover:text-accent-dim">+ Add player</button>
+          )}
+        </div>
+        {slots.map((slot, i) => (
+          <div key={i} className="card space-y-2">
+            <div className="flex items-center gap-2">
+              <input
+                className="input flex-1"
+                placeholder={i === 0 ? 'You' : `Player ${i + 1}`}
+                value={slot.name}
+                onChange={(e) => updateSlot(i, { name: e.target.value, friendId: i === 0 ? YOU_ID : null })}
+              />
+              {i > 0 && availableFriends.length > 0 && (
+                <button
+                  onClick={() => setPickerFor(pickerFor === i ? null : i)}
+                  className="shrink-0 text-xs px-3 py-2 rounded-xl border border-line bg-white/[0.03] hover:bg-white/[0.06] text-ink-muted"
+                >
+                  Pick
+                </button>
+              )}
+              {i > 0 && (
+                <button onClick={() => removeSlot(i)} className="text-ink-faint hover:text-ink px-2" aria-label="Remove">×</button>
+              )}
+            </div>
+            {pickerFor === i && (
+              <ul className="rounded-xl border border-line bg-bg-sunken divide-y divide-line max-h-56 overflow-auto">
+                {availableFriends.map((f) => (
+                  <li key={f.id}>
+                    <button
+                      onClick={() => pickFriend(i, f)}
+                      className="w-full text-left px-3 py-2.5 hover:bg-white/[0.04] flex items-center justify-between"
+                    >
+                      <span>{f.name}</span>
+                      {f.venmoHandle && <span className="text-xs text-ink-muted">@{f.venmoHandle.replace(/^@/, '')}</span>}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <input
+              className="input"
+              placeholder="Venmo handle (optional)"
+              value={slot.venmo}
+              onChange={(e) => updateSlot(i, { venmo: e.target.value })}
+            />
+          </div>
+        ))}
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="eyebrow">Format</h2>
+        <div className="seg-group">
+          {(['nassau', 'skins', 'wolf'] as FormatType[]).map((t) => (
+            <button
+              key={t}
+              onClick={() => setFormatType(t)}
+              className={`seg capitalize ${formatType === t ? 'seg-active' : ''}`}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+
+        {formatType === 'nassau' && (
+          <div className="card grid grid-cols-3 gap-2">
+            {(['f9', 'b9', 'total'] as const).map((seg) => (
+              <div key={seg}>
+                <label className="label uppercase text-xs">{seg}</label>
+                <input
+                  type="number"
+                  className="input"
+                  value={nassauStakes[seg]}
+                  onChange={(e) => setNassauStakes({ ...nassauStakes, [seg]: Number(e.target.value) })}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+        {formatType === 'skins' && (
+          <div className="card">
+            <label className="label">Stake per skin ($)</label>
+            <input type="number" className="input" value={skinsStake} onChange={(e) => setSkinsStake(Number(e.target.value))} />
+          </div>
+        )}
+        {formatType === 'wolf' && (
+          <div className="card">
+            <label className="label">Stake per point ($)</label>
+            <input type="number" className="input" value={wolfStake} onChange={(e) => setWolfStake(Number(e.target.value))} />
+          </div>
+        )}
+      </section>
+
+      <button disabled={!canSubmit} onClick={handleCreate} className="btn-primary w-full">
+        Create round
+      </button>
+    </main>
+  );
+}
