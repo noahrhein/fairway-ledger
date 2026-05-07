@@ -47,10 +47,15 @@ export type Friend = {
   createdAt: string;
 };
 
+export type GameKey = 'nassau' | 'skins' | 'wolf' | 'match' | 'stroke' | 'stableford';
+
 export type Profile = {
   id: string;
   displayName: string;
   venmoHandle?: string | null;
+  homeState?: string | null;
+  handicap?: number | null;
+  preferredGames?: GameKey[];
 };
 
 export type LeaderboardEntry = {

@@ -70,16 +70,31 @@ export default function FriendsPage() {
       </header>
 
       {profile && (
-        <section className="card flex items-center gap-3">
-          <div className="row-icon"><User aria-hidden className="w-5 h-5" strokeWidth={1.75} /></div>
-          <div className="min-w-0 flex-1">
-            <div className="font-medium text-accent">{profile.displayName}</div>
-            <div className="text-xs text-ink-muted mt-0.5">
-              {profile.venmoHandle ? `@${profile.venmoHandle.replace(/^@/, '')}` : 'No Venmo'}
+        <section className="card space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="row-icon"><User aria-hidden className="w-5 h-5" strokeWidth={1.75} /></div>
+            <div className="min-w-0 flex-1">
+              <div className="font-medium text-accent">{profile.displayName}</div>
+              <div className="text-xs text-ink-muted mt-0.5">
+                {profile.venmoHandle ? `@${profile.venmoHandle.replace(/^@/, '')}` : 'No Venmo'}
+              </div>
             </div>
+            <a href="/onboarding" className="text-xs text-ink-muted hover:text-ink">Edit</a>
+            <button onClick={handleSignOut} className="text-xs text-ink-faint hover:text-red-400 ml-2">Sign out</button>
           </div>
-          <a href="/onboarding" className="text-xs text-ink-muted hover:text-ink">Edit</a>
-          <button onClick={handleSignOut} className="text-xs text-ink-faint hover:text-red-400 ml-2">Sign out</button>
+          {(profile.homeState || profile.handicap !== null && profile.handicap !== undefined || (profile.preferredGames && profile.preferredGames.length > 0)) && (
+            <div className="flex flex-wrap gap-1.5 pl-12">
+              {profile.homeState && (
+                <span className="text-xs px-2 py-0.5 rounded-full bg-bg-sunken text-ink-muted">{profile.homeState}</span>
+              )}
+              {profile.handicap !== null && profile.handicap !== undefined && (
+                <span className="text-xs px-2 py-0.5 rounded-full bg-bg-sunken text-ink-muted">HCP {profile.handicap}</span>
+              )}
+              {(profile.preferredGames ?? []).map((g) => (
+                <span key={g} className="text-xs px-2 py-0.5 rounded-full bg-accent-soft text-accent capitalize">{g}</span>
+              ))}
+            </div>
+          )}
         </section>
       )}
 

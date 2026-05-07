@@ -91,11 +91,39 @@ export async function getProfile(): Promise<Profile | null> {
   if (!user) return null;
   const { data } = await supabase
     .from('profiles')
-    .select('id, display_name, venmo_handle')
+    .select('id, display_name, venmo_handle, home_state, handicap, preferred_games')
     .eq('id', user.id)
     .single();
   if (!data) return null;
-  return { id: data.id, displayName: data.display_name, venmoHandle: data.venmo_handle };
+  return {
+    id: data.id,
+    displayName: data.display_name,
+    venmoHandle: data.venmo_handle,
+    homeState: data.home_state ?? null,
+    handicap: data.handicap !== null && data.handicap !== undefined ? Number(data.handicap) : null,
+    preferredGames: (data.preferred_games ?? []) as Profile['preferredGames'],
+  };
+}
+
+export async function saveProfile(input: {
+  displayName: string;
+  venmoHandle?: string | null;
+  homeState?: string | null;
+  handicap?: number | null;
+  preferredGames?: string[];
+}): Promise<boolean> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+  const { error } = await supabase.from('profiles').upsert({
+    id: user.id,
+    display_name: input.displayName,
+    venmo_handle: input.venmoHandle ?? null,
+    home_state: input.homeState ?? null,
+    handicap: input.handicap ?? null,
+    preferred_games: input.preferredGames ?? [],
+  });
+  return !error;
 }
 
 export async function signOut() {
