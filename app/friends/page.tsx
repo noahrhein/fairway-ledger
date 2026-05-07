@@ -1,48 +1,56 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { deleteFriend, getFriends, saveFriend } from '../../lib/friends';
-import type { Friend } from '../../types';
-import { YOU_ID } from '../../types';
+import {
+  deleteFriend,
+  getFriends,
+  saveFriend,
+  getProfile,
+  getCurrentUser,
+} from '../../lib/db';
+import type { Friend, Profile } from '../../types';
 import { User } from 'lucide-react';
 
 export default function FriendsPage() {
   const [friends, setFriends] = useState<Friend[]>([]);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [ready, setReady] = useState(false);
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState('');
   const [venmo, setVenmo] = useState('');
 
-  useEffect(() => {
-    setFriends(getFriends());
+  useEffect(() => { void refresh(); }, []);
+
+  async function refresh() {
+    const [list, prof] = await Promise.all([getFriends(), getProfile()]);
+    setFriends(list);
+    setProfile(prof);
     setReady(true);
-  }, []);
-
-  function refresh() { setFriends(getFriends()); }
-
-  function handleAdd() {
-    if (!name.trim()) return;
-    saveFriend({
-      id: crypto.randomUUID(),
-      name: name.trim(),
-      venmoHandle: venmo.trim() || undefined,
-      createdAt: new Date().toISOString(),
-    });
-    setName(''); setVenmo(''); setAdding(false); refresh();
   }
 
-  function handleDelete(id: string) {
-    if (id === YOU_ID) return;
+  async function handleAdd() {
+    if (!name.trim()) return;
+    await saveFriend({ name: name.trim(), venmoHandle: venmo.trim() || undefined });
+    setName(''); setVenmo(''); setAdding(false);
+    void refresh();
+  }
+
+  async function handleDelete(id: string) {
     if (confirm('Remove this friend?')) {
-      deleteFriend(id);
-      refresh();
+      await deleteFriend(id);
+      void refresh();
     }
   }
 
-  function updateFriend(f: Friend, patch: Partial<Friend>) {
-    saveFriend({ ...f, ...patch });
-    refresh();
+  async function updateFriend(f: Friend, patch: Partial<Friend>) {
+    await saveFriend({ id: f.id, name: patch.name ?? f.name, venmoHandle: patch.venmoHandle ?? f.venmoHandle });
+    void refresh();
+  }
+
+  async function handleSignOut() {
+    const res = await fetch('/auth/signout', { method: 'POST' });
+    if (res.redirected) window.location.href = res.url;
+    else window.location.href = '/login';
   }
 
   return (
@@ -61,21 +69,24 @@ export default function FriendsPage() {
         </button>
       </header>
 
+      {profile && (
+        <section className="card flex items-center gap-3">
+          <div className="row-icon"><User aria-hidden className="w-5 h-5" strokeWidth={1.75} /></div>
+          <div className="min-w-0 flex-1">
+            <div className="font-medium text-accent">{profile.displayName}</div>
+            <div className="text-xs text-ink-muted mt-0.5">
+              {profile.venmoHandle ? `@${profile.venmoHandle.replace(/^@/, '')}` : 'No Venmo'}
+            </div>
+          </div>
+          <a href="/onboarding" className="text-xs text-ink-muted hover:text-ink">Edit</a>
+          <button onClick={handleSignOut} className="text-xs text-ink-faint hover:text-red-400 ml-2">Sign out</button>
+        </section>
+      )}
+
       {adding && (
         <section className="card space-y-2">
-          <input
-            autoFocus
-            className="input"
-            placeholder="Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-          <input
-            className="input"
-            placeholder="Venmo handle (optional)"
-            value={venmo}
-            onChange={(e) => setVenmo(e.target.value)}
-          />
+          <input autoFocus className="input" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
+          <input className="input" placeholder="Venmo handle (optional)" value={venmo} onChange={(e) => setVenmo(e.target.value)} />
           <div className="flex gap-2 pt-1">
             <button onClick={() => { setAdding(false); setName(''); setVenmo(''); }} className="btn-secondary flex-1">Cancel</button>
             <button onClick={handleAdd} disabled={!name.trim()} className="btn-primary flex-1">Save</button>
@@ -85,10 +96,14 @@ export default function FriendsPage() {
 
       <section className="space-y-2">
         <div className="flex items-center justify-between">
-          <h2 className="eyebrow">All</h2>
+          <h2 className="eyebrow">Phonebook</h2>
           <span className="text-xs text-ink-faint">{friends.length}</span>
         </div>
-        {!ready ? null : (
+        {!ready ? null : friends.length === 0 ? (
+          <div className="card text-ink-muted text-center py-8 text-sm">
+            Add friends so you can pick them when starting a round.
+          </div>
+        ) : (
           <ul className="card divide-y divide-line py-0">
             {friends.map((f) => (
               <FriendRow
@@ -109,7 +124,6 @@ function FriendRow({ friend, onDelete, onUpdate }: { friend: Friend; onDelete: (
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(friend.name);
   const [venmo, setVenmo] = useState(friend.venmoHandle ?? '');
-  const isYou = friend.id === YOU_ID;
   const initial = friend.name.charAt(0).toUpperCase();
 
   function save() {
@@ -133,18 +147,16 @@ function FriendRow({ friend, onDelete, onUpdate }: { friend: Friend; onDelete: (
 
   return (
     <li className="row">
-      <div className="row-icon">{isYou ? <User aria-hidden className="w-5 h-5" strokeWidth={1.75} /> : initial}</div>
+      <div className="row-icon">{initial}</div>
       <div className="min-w-0 flex-1">
-        <div className={`font-medium truncate ${isYou ? 'text-accent' : ''}`}>{friend.name}</div>
+        <div className="font-medium truncate">{friend.name}</div>
         <div className="text-xs text-ink-muted mt-0.5">
           {friend.venmoHandle ? `@${friend.venmoHandle.replace(/^@/, '')}` : 'No Venmo'}
         </div>
       </div>
       <div className="flex items-center gap-2">
         <button onClick={() => setEditing(true)} className="text-xs text-ink-muted hover:text-ink">Edit</button>
-        {!isYou && (
-          <button onClick={onDelete} className="text-xs text-ink-faint hover:text-red-400">Remove</button>
-        )}
+        <button onClick={onDelete} className="text-xs text-ink-faint hover:text-red-400">Remove</button>
       </div>
     </li>
   );

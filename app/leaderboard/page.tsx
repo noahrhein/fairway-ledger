@@ -1,31 +1,35 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { getRounds } from '../../lib/storage';
+import { getRounds, getCurrentUser } from '../../lib/db';
 import { computeLeaderboard } from '../../lib/leaderboard';
 import type { Round } from '../../types';
-import { YOU_ID } from '../../types';
 import { Trophy } from 'lucide-react';
 
 type SortKey = 'net' | 'rounds';
 
 export default function LeaderboardPage() {
   const [rounds, setRounds] = useState<Round[]>([]);
+  const [userId, setUserId] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [sort, setSort] = useState<SortKey>('net');
 
   useEffect(() => {
-    setRounds(getRounds());
-    setReady(true);
+    (async () => {
+      const [user, list] = await Promise.all([getCurrentUser(), getRounds()]);
+      setUserId(user?.id ?? null);
+      setRounds(list);
+      setReady(true);
+    })();
   }, []);
 
   const lb = useMemo(() => {
-    const entries = computeLeaderboard(rounds);
+    const entries = computeLeaderboard(rounds, userId);
     if (sort === 'rounds') return [...entries].sort((a, b) => b.rounds - a.rounds);
     return entries;
-  }, [rounds, sort]);
+  }, [rounds, sort, userId]);
 
-  const you = lb.find((e) => e.friendId === YOU_ID);
+  const you = lb.find((e) => e.isYou);
 
   return (
     <main className="space-y-6">
@@ -58,9 +62,9 @@ export default function LeaderboardPage() {
       </section>
 
       <div className="seg-group">
-        {(['net', 'rounds'] as SortKey[]).map((k) => (
-          <button key={k} onClick={() => setSort(k)} className={`seg ${sort === k ? 'seg-active' : ''}`}>
-            {k === 'net' ? 'By net' : 'By rounds'}
+        {(['net', 'rounds'] as SortKey[]).map((sk) => (
+          <button key={sk} onClick={() => setSort(sk)} className={`seg ${sort === sk ? 'seg-active' : ''}`}>
+            {sk === 'net' ? 'By net' : 'By rounds'}
           </button>
         ))}
       </div>
@@ -77,14 +81,13 @@ export default function LeaderboardPage() {
         ) : (
           <ul className="card divide-y divide-line py-0">
             {lb.map((entry, i) => {
-              const isYou = entry.friendId === YOU_ID;
               const positive = entry.net > 0;
               const negative = entry.net < 0;
               return (
-                <li key={entry.friendId} className="row">
+                <li key={entry.key} className="row">
                   <div className="row-icon text-sm font-medium">{i + 1}</div>
                   <div className="min-w-0 flex-1">
-                    <div className={`font-medium truncate ${isYou ? 'text-accent' : ''}`}>{entry.name}</div>
+                    <div className={`font-medium truncate ${entry.isYou ? 'text-accent' : ''}`}>{entry.name}</div>
                     <div className="text-xs text-ink-muted mt-0.5">
                       {entry.rounds} round{entry.rounds === 1 ? '' : 's'}
                     </div>

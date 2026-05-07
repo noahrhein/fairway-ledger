@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
-import { getRound, saveRound } from '../../../../lib/storage';
+import { getRound, saveRoundResults } from '../../../../lib/db';
 import { calculateNassau } from '../../../../lib/betting/nassau';
 import { calculateSkins } from '../../../../lib/betting/skins';
 import { calculateWolf } from '../../../../lib/betting/wolf';
@@ -17,8 +17,10 @@ export default function ScoreEntryPage() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    setRound(getRound(id));
-    setReady(true);
+    (async () => {
+      setRound(await getRound(id));
+      setReady(true);
+    })();
   }, [id]);
 
   if (!ready) return null;
@@ -47,15 +49,17 @@ function ScoreEntry({ round, onSaved }: { round: Round; onSaved: () => void }) {
   }, [round, fmt.type]);
 
   const [results, setResults] = useState<RoundResults>(initial);
+  const [busy, setBusy] = useState(false);
 
-  function handleSave() {
+  async function handleSave() {
     let debts;
+    let toSave: RoundResults = results;
     if (results.type === 'nassau' && fmt.type === 'nassau') {
       const scores = Object.fromEntries(
-        Object.entries(results.scores).map(([k, v]) => [k, { ...v, total: v.total || v.f9 + v.b9 }])
+        Object.entries(results.scores).map(([k, v]) => [k, { ...v, total: v.total || v.f9 + v.b9 }]),
       );
       debts = calculateNassau(round.players, scores, fmt.stakes);
-      results.scores = scores;
+      toSave = { ...results, scores };
     } else if (results.type === 'skins' && fmt.type === 'skins') {
       debts = calculateSkins(round.players, results.skinsByPlayer, fmt.stakePerSkin);
     } else if (results.type === 'wolf' && fmt.type === 'wolf') {
@@ -64,7 +68,13 @@ function ScoreEntry({ round, onSaved }: { round: Round; onSaved: () => void }) {
       return;
     }
     const payouts = simplifyDebts(debts, round.players);
-    saveRound({ ...round, results, payouts });
+    setBusy(true);
+    await saveRoundResults(
+      round.id,
+      toSave,
+      payouts.map((p) => ({ fromPlayerId: p.fromPlayerId, toPlayerId: p.toPlayerId, amount: p.amount })),
+    );
+    setBusy(false);
     onSaved();
   }
 
@@ -152,7 +162,9 @@ function ScoreEntry({ round, onSaved }: { round: Round; onSaved: () => void }) {
         </div>
       )}
 
-      <button onClick={handleSave} className="btn-primary w-full">Calculate payouts</button>
+      <button onClick={handleSave} disabled={busy} className="btn-primary w-full">
+        {busy ? 'Saving…' : 'Calculate payouts'}
+      </button>
     </main>
   );
 }

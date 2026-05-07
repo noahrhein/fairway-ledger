@@ -1,5 +1,6 @@
 export type Player = {
-  id: string;
+  id: string;            // round_players.id (uuid)
+  userId?: string | null; // auth user id if claimed
   name: string;
   venmoHandle?: string;
 };
@@ -32,6 +33,8 @@ export type Round = {
   payouts?: Payout[];
   settled: boolean;
   createdAt: string;
+  ownerId: string;
+  shareToken: string;
 };
 
 export type PairwiseDebt = { from: string; to: string; amount: number };
@@ -40,14 +43,20 @@ export type Friend = {
   id: string;
   name: string;
   venmoHandle?: string;
+  friendUserId?: string | null;
   createdAt: string;
 };
 
-export const YOU_ID = 'you';
+export type Profile = {
+  id: string;
+  displayName: string;
+  venmoHandle?: string | null;
+};
 
 export type LeaderboardEntry = {
-  friendId: string;
+  key: string;        // user_id if claimed, else `name:<name>`
   name: string;
+  isYou: boolean;
   net: number;
   rounds: number;
   paid: number;

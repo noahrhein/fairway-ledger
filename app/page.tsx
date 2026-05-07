@@ -2,28 +2,32 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { getRounds } from '../lib/storage';
+import { getRounds, getCurrentUser } from '../lib/db';
 import { computeLeaderboard } from '../lib/leaderboard';
 import type { Round } from '../types';
-import { YOU_ID } from '../types';
 import { Flag } from 'lucide-react';
 
 type Filter = 'all' | 'open' | 'settled';
 
 export default function HomePage() {
   const [rounds, setRounds] = useState<Round[]>([]);
+  const [userId, setUserId] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [filter, setFilter] = useState<Filter>('all');
 
   useEffect(() => {
-    setRounds(getRounds());
-    setReady(true);
+    (async () => {
+      const [user, list] = await Promise.all([getCurrentUser(), getRounds()]);
+      setUserId(user?.id ?? null);
+      setRounds(list);
+      setReady(true);
+    })();
   }, []);
 
   const career = useMemo(() => {
-    const lb = computeLeaderboard(rounds);
-    return lb.find((e) => e.friendId === YOU_ID) ?? null;
-  }, [rounds]);
+    const lb = computeLeaderboard(rounds, userId);
+    return lb.find((e) => e.isYou) ?? null;
+  }, [rounds, userId]);
 
   const filtered = useMemo(() => {
     if (filter === 'open') return rounds.filter((r) => !r.settled);
@@ -94,8 +98,7 @@ export default function HomePage() {
         ) : (
           <ul className="card divide-y divide-line py-0">
             {filtered.map((r) => {
-              const total =
-                (r.payouts ?? []).reduce((s, p) => s + p.amount, 0) || 0;
+              const total = (r.payouts ?? []).reduce((s, p) => s + p.amount, 0) || 0;
               return (
                 <li key={r.id}>
                   <Link href={`/round/${r.id}`} className="row">

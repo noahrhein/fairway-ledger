@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { getRound, saveRound } from '../../../../lib/storage';
+import { getRound, togglePayout, getCurrentUser } from '../../../../lib/db';
 import { venmoChargeUrl } from '../../../../lib/venmo';
 import type { Round } from '../../../../types';
 import { Flag, Check } from 'lucide-react';
@@ -11,30 +11,32 @@ import { Flag, Check } from 'lucide-react';
 export default function SettlePage() {
   const { id } = useParams<{ id: string }>();
   const [round, setRound] = useState<Round | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    setRound(getRound(id));
-    setReady(true);
+    (async () => {
+      const [r, user] = await Promise.all([getRound(id), getCurrentUser()]);
+      setRound(r);
+      setUserId(user?.id ?? null);
+      setReady(true);
+    })();
   }, [id]);
 
   if (!ready) return null;
   if (!round) return <p className="text-ink-muted">Round not found.</p>;
 
-  const playerName = (pid: string) => round.players.find((p) => p.id === pid)?.name ?? '?';
+  const isOwner = round.ownerId === userId;
+  const playerName = (pid: string) => round!.players.find((p) => p.id === pid)?.name ?? '?';
   const playerVenmo = (pid: string) =>
-    round.players.find((p) => p.id === pid)?.venmoHandle?.replace(/^@/, '');
+    round!.players.find((p) => p.id === pid)?.venmoHandle?.replace(/^@/, '');
   const initial = (pid: string) => playerName(pid).charAt(0).toUpperCase();
 
-  function togglePayout(payoutId: string) {
+  async function handleToggle(payoutId: string) {
     if (!round) return;
-    const payouts = (round.payouts ?? []).map((p) =>
-      p.id === payoutId ? { ...p, status: (p.status === 'settled' ? 'pending' : 'settled') as 'pending' | 'settled' } : p
-    );
-    const allSettled = payouts.length > 0 && payouts.every((p) => p.status === 'settled');
-    const updated = { ...round, payouts, settled: allSettled };
-    saveRound(updated);
-    setRound(updated);
+    await togglePayout(payoutId, round.id);
+    const fresh = await getRound(round.id);
+    if (fresh) setRound(fresh);
   }
 
   const payouts = round.payouts ?? [];
@@ -103,24 +105,25 @@ export default function SettlePage() {
                         Open Venmo
                       </a>
                     )}
-                    <button
-                      onClick={() => togglePayout(p.id)}
-                      aria-pressed={settled}
-                      className={`flex-1 inline-flex items-center justify-center gap-2 rounded-full px-4 py-3 text-sm font-medium transition ${
-                        settled
-                          ? 'bg-accent-soft text-accent hover:bg-accent/20'
-                          : 'bg-ink text-bg shadow-pill hover:opacity-90'
-                      }`}
-                    >
-                      {settled ? (
-                        <>
-                          <Check aria-hidden className="w-4 h-4" strokeWidth={2.5} />
-                          Settled
-                        </>
-                      ) : (
-                        'Mark settled'
-                      )}
-                    </button>
+                    {isOwner ? (
+                      <button
+                        onClick={() => handleToggle(p.id)}
+                        aria-pressed={settled}
+                        className={`flex-1 inline-flex items-center justify-center gap-2 rounded-full px-4 py-3 text-sm font-medium transition ${
+                          settled
+                            ? 'bg-accent-soft text-accent hover:bg-accent/20'
+                            : 'bg-ink text-bg shadow-pill hover:opacity-90'
+                        }`}
+                      >
+                        {settled ? (<><Check className="w-4 h-4" strokeWidth={2.5} /> Settled</>) : 'Mark settled'}
+                      </button>
+                    ) : (
+                      <div className={`flex-1 inline-flex items-center justify-center gap-2 rounded-full px-4 py-3 text-sm font-medium ${
+                        settled ? 'bg-accent-soft text-accent' : 'bg-bg-sunken text-ink-muted'
+                      }`}>
+                        {settled ? (<><Check className="w-4 h-4" strokeWidth={2.5} /> Settled</>) : 'Pending'}
+                      </div>
+                    )}
                   </div>
                   {!settled && !handle && (
                     <p className="text-xs text-ink-faint">No Venmo handle on file for {playerName(p.toPlayerId)}.</p>

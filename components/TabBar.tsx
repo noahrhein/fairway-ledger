@@ -10,8 +10,13 @@ const tabs = [
   { href: '/friends', label: 'Friends', Icon: Users },
 ] as const;
 
+const HIDDEN_PREFIXES = ['/login', '/onboarding', '/share', '/auth'];
+
 export function TabBar() {
   const pathname = usePathname() ?? '/';
+  if (HIDDEN_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + '/'))) {
+    return null;
+  }
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-20 pointer-events-none">
       <div className="mx-auto max-w-[480px] px-4 pb-4 pt-2 pointer-events-auto">

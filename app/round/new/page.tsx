@@ -3,13 +3,18 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { saveRound } from '../../../lib/storage';
-import { findOrCreateByName, getFriends, saveFriend } from '../../../lib/friends';
-import type { BetFormat, Friend, Player, Round } from '../../../types';
-import { YOU_ID } from '../../../types';
+import {
+  createRound,
+  findOrCreateFriendByName,
+  getCurrentUser,
+  getFriends,
+  getProfile,
+  saveFriend,
+} from '../../../lib/db';
+import type { BetFormat, Friend } from '../../../types';
 
 type FormatType = 'nassau' | 'skins' | 'wolf';
-type Slot = { friendId: string | null; name: string; venmo: string };
+type Slot = { friendId: string | null; userId: string | null; name: string; venmo: string };
 
 export default function NewRoundPage() {
   const router = useRouter();
@@ -17,43 +22,52 @@ export default function NewRoundPage() {
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [friends, setFriends] = useState<Friend[]>([]);
   const [slots, setSlots] = useState<Slot[]>([
-    { friendId: YOU_ID, name: 'You', venmo: '' },
-    { friendId: null, name: '', venmo: '' },
+    { friendId: null, userId: null, name: '', venmo: '' },
+    { friendId: null, userId: null, name: '', venmo: '' },
   ]);
   const [pickerFor, setPickerFor] = useState<number | null>(null);
   const [formatType, setFormatType] = useState<FormatType>('nassau');
   const [nassauStakes, setNassauStakes] = useState({ f9: 5, b9: 5, total: 10 });
   const [skinsStake, setSkinsStake] = useState(2);
   const [wolfStake, setWolfStake] = useState(1);
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    const list = getFriends();
-    setFriends(list);
-    const you = list.find((f) => f.id === YOU_ID);
-    if (you) {
-      setSlots((s) => s.map((slot, i) => (i === 0 ? { friendId: YOU_ID, name: you.name, venmo: you.venmoHandle ?? '' } : slot)));
-    }
+    (async () => {
+      const [list, profile, user] = await Promise.all([getFriends(), getProfile(), getCurrentUser()]);
+      setFriends(list);
+      if (profile && user) {
+        setSlots((s) => s.map((slot, i) => i === 0
+          ? { friendId: null, userId: user.id, name: profile.displayName, venmo: profile.venmoHandle ?? '' }
+          : slot));
+      }
+    })();
   }, []);
 
   const canSubmit =
     course.trim().length > 0 &&
     slots.length >= 2 &&
     slots.every((s) => s.name.trim().length > 0) &&
-    new Set(slots.map((s) => s.name.trim().toLowerCase())).size === slots.length;
+    new Set(slots.map((s) => s.name.trim().toLowerCase())).size === slots.length &&
+    !busy;
 
   function updateSlot(i: number, patch: Partial<Slot>) {
     setSlots((arr) => arr.map((s, idx) => (idx === i ? { ...s, ...patch } : s)));
   }
   function addSlot() {
-    if (slots.length < 4) setSlots((s) => [...s, { friendId: null, name: '', venmo: '' }]);
+    if (slots.length < 4) setSlots((s) => [...s, { friendId: null, userId: null, name: '', venmo: '' }]);
   }
   function removeSlot(i: number) {
     if (i === 0) return;
     setSlots((s) => s.filter((_, idx) => idx !== i));
   }
-
   function pickFriend(slotIdx: number, friend: Friend) {
-    updateSlot(slotIdx, { friendId: friend.id, name: friend.name, venmo: friend.venmoHandle ?? '' });
+    updateSlot(slotIdx, {
+      friendId: friend.id,
+      userId: friend.friendUserId ?? null,
+      name: friend.name,
+      venmo: friend.venmoHandle ?? '',
+    });
     setPickerFor(null);
   }
 
@@ -63,40 +77,33 @@ export default function NewRoundPage() {
     return { type: 'wolf', stakePerPoint: wolfStake };
   }
 
-  function handleCreate() {
-    const players: Player[] = slots.map((s, i) => {
-      if (i === 0) {
-        const youFriend: Friend = {
-          id: YOU_ID,
-          name: s.name.trim(),
-          venmoHandle: s.venmo.trim() || undefined,
-          createdAt: new Date().toISOString(),
-        };
-        saveFriend(youFriend);
-        return { id: YOU_ID, name: youFriend.name, venmoHandle: youFriend.venmoHandle };
+  async function handleCreate() {
+    setBusy(true);
+    // Ensure friend records exist for non-self slots
+    for (let i = 1; i < slots.length; i++) {
+      const s = slots[i]!;
+      if (s.friendId) {
+        await saveFriend({ id: s.friendId, name: s.name.trim(), venmoHandle: s.venmo.trim() || undefined });
+      } else {
+        await findOrCreateFriendByName(s.name, s.venmo.trim() || undefined);
       }
-      const friend = s.friendId
-        ? { id: s.friendId, name: s.name.trim(), venmoHandle: s.venmo.trim() || undefined, createdAt: new Date().toISOString() }
-        : findOrCreateByName(s.name, s.venmo);
-      if (s.friendId) saveFriend(friend);
-      return { id: friend.id, name: friend.name, venmoHandle: friend.venmoHandle };
-    });
-
-    const round: Round = {
-      id: crypto.randomUUID(),
-      date: new Date(date).toISOString(),
+    }
+    const round = await createRound({
       course: course.trim(),
-      players,
+      date,
       format: buildFormat(),
-      settled: false,
-      createdAt: new Date().toISOString(),
-    };
-    saveRound(round);
-    router.push(`/round/${round.id}`);
+      players: slots.map((s) => ({
+        name: s.name.trim(),
+        venmoHandle: s.venmo.trim() || undefined,
+        userId: s.userId,
+      })),
+    });
+    setBusy(false);
+    if (round) router.push(`/round/${round.id}`);
   }
 
-  const usedIds = new Set(slots.map((s) => s.friendId).filter(Boolean) as string[]);
-  const availableFriends = friends.filter((f) => f.id !== YOU_ID && !usedIds.has(f.id));
+  const usedFriendIds = new Set(slots.map((s) => s.friendId).filter(Boolean) as string[]);
+  const availableFriends = friends.filter((f) => !usedFriendIds.has(f.id));
 
   return (
     <main className="space-y-6">
@@ -130,7 +137,7 @@ export default function NewRoundPage() {
                 className="input flex-1"
                 placeholder={i === 0 ? 'You' : `Player ${i + 1}`}
                 value={slot.name}
-                onChange={(e) => updateSlot(i, { name: e.target.value, friendId: i === 0 ? YOU_ID : null })}
+                onChange={(e) => updateSlot(i, { name: e.target.value, friendId: null })}
               />
               {i > 0 && availableFriends.length > 0 && (
                 <button
@@ -213,7 +220,7 @@ export default function NewRoundPage() {
       </section>
 
       <button disabled={!canSubmit} onClick={handleCreate} className="btn-primary w-full">
-        Create round
+        {busy ? 'Creating…' : 'Create round'}
       </button>
     </main>
   );

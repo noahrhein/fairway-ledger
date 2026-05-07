@@ -3,19 +3,25 @@
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { deleteRound, getRound } from '../../../lib/storage';
+import { deleteRound, getRound, getCurrentUser } from '../../../lib/db';
 import type { Round } from '../../../types';
-import { Flag } from 'lucide-react';
+import { Flag, Share2, Check } from 'lucide-react';
 
 export default function RoundDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [round, setRound] = useState<Round | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    setRound(getRound(id));
-    setReady(true);
+    (async () => {
+      const [r, user] = await Promise.all([getRound(id), getCurrentUser()]);
+      setRound(r);
+      setUserId(user?.id ?? null);
+      setReady(true);
+    })();
   }, [id]);
 
   if (!ready) return null;
@@ -28,6 +34,7 @@ export default function RoundDetailPage() {
     );
   }
 
+  const isOwner = round.ownerId === userId;
   const fmt = round.format;
   const stakeSummary =
     fmt.type === 'nassau'
@@ -35,6 +42,19 @@ export default function RoundDetailPage() {
       : fmt.type === 'skins'
         ? `$${fmt.stakePerSkin} per skin`
         : `$${fmt.stakePerPoint} per point`;
+
+  async function handleShare() {
+    const url = `${window.location.origin}/share/${round!.shareToken}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: `${round!.course} – Fairway Ledger`, url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
+    } catch { /* user cancelled */ }
+  }
 
   return (
     <main className="space-y-6">
@@ -55,34 +75,52 @@ export default function RoundDetailPage() {
       <section>
         <h2 className="eyebrow mb-2">Players</h2>
         <ul className="card divide-y divide-line">
-          {round.players.map((p, i) => (
-            <li key={p.id} className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
-              <span className={i === 0 ? 'font-medium text-accent' : ''}>{p.name}</span>
-              {p.venmoHandle && (
-                <span className="text-xs text-ink-muted">@{p.venmoHandle.replace(/^@/, '')}</span>
-              )}
-            </li>
-          ))}
+          {round.players.map((p) => {
+            const isMe = !!userId && p.userId === userId;
+            const claimed = !!p.userId;
+            return (
+              <li key={p.id} className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
+                <span className={isMe ? 'font-medium text-accent' : ''}>{p.name}</span>
+                <span className="text-xs text-ink-muted flex items-center gap-2">
+                  {p.venmoHandle && <span>@{p.venmoHandle.replace(/^@/, '')}</span>}
+                  {claimed && <span className="text-accent" title="Account linked"><Check className="w-3.5 h-3.5 inline" /></span>}
+                </span>
+              </li>
+            );
+          })}
         </ul>
       </section>
 
-      {!round.results ? (
-        <Link href={`/round/${round.id}/score`} className="btn-primary w-full">Enter results</Link>
-      ) : (
-        <Link href={`/round/${round.id}/settle`} className="btn-primary w-full">View payouts</Link>
-      )}
+      <div className="space-y-2">
+        {!round.results ? (
+          isOwner ? (
+            <Link href={`/round/${round.id}/score`} className="btn-primary w-full">Enter results</Link>
+          ) : (
+            <p className="text-sm text-ink-muted text-center py-4">Waiting for the host to enter results.</p>
+          )
+        ) : (
+          <Link href={`/round/${round.id}/settle`} className="btn-primary w-full">View payouts</Link>
+        )}
 
-      <button
-        onClick={() => {
-          if (confirm('Delete this round?')) {
-            deleteRound(round.id);
-            router.push('/');
-          }
-        }}
-        className="text-xs text-ink-faint hover:text-red-400 w-full text-center pt-4"
-      >
-        Delete round
-      </button>
+        <button onClick={handleShare} className="btn-secondary w-full inline-flex items-center justify-center gap-2">
+          <Share2 className="w-4 h-4" strokeWidth={2} />
+          {copied ? 'Link copied!' : 'Share with players'}
+        </button>
+      </div>
+
+      {isOwner && (
+        <button
+          onClick={async () => {
+            if (confirm('Delete this round?')) {
+              await deleteRound(round.id);
+              router.push('/');
+            }
+          }}
+          className="text-xs text-ink-faint hover:text-red-400 w-full text-center pt-4"
+        >
+          Delete round
+        </button>
+      )}
     </main>
   );
 }
