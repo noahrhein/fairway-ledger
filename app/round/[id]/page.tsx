@@ -3,9 +3,15 @@
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { deleteRound, getRound, getCurrentUser } from '../../../lib/db';
+import {
+  addSideBet,
+  deleteRound,
+  deleteSideBet,
+  getRound,
+  getCurrentUser,
+} from '../../../lib/db';
 import type { Round } from '../../../types';
-import { Flag, Share2, Check } from 'lucide-react';
+import { Flag, Share2, Check, Plus } from 'lucide-react';
 
 export default function RoundDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -15,14 +21,14 @@ export default function RoundDetailPage() {
   const [ready, setReady] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  useEffect(() => {
-    (async () => {
-      const [r, user] = await Promise.all([getRound(id), getCurrentUser()]);
-      setRound(r);
-      setUserId(user?.id ?? null);
-      setReady(true);
-    })();
-  }, [id]);
+  useEffect(() => { void refresh(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [id]);
+
+  async function refresh() {
+    const [r, user] = await Promise.all([getRound(id), getCurrentUser()]);
+    setRound(r);
+    setUserId(user?.id ?? null);
+    setReady(true);
+  }
 
   if (!ready) return null;
   if (!round) {
@@ -41,7 +47,9 @@ export default function RoundDetailPage() {
       ? `F9 $${fmt.stakes.f9} · B9 $${fmt.stakes.b9} · Total $${fmt.stakes.total}`
       : fmt.type === 'skins'
         ? `$${fmt.stakePerSkin} per skin`
-        : `$${fmt.stakePerPoint} per point`;
+        : fmt.type === 'wolf'
+          ? `$${fmt.stakePerPoint} per point`
+          : `$${fmt.buyIn} buy-in · winner takes all`;
 
   async function handleShare() {
     const url = `${window.location.origin}/share/${round!.shareToken}`;
@@ -63,7 +71,7 @@ export default function RoundDetailPage() {
       </header>
 
       <section className="card-hero">
-        <div className="eyebrow text-ink-muted/70 capitalize">{fmt.type}</div>
+        <div className="eyebrow text-ink-muted/70 capitalize">{fmt.type === 'match' ? 'Match Play' : fmt.type}</div>
         <h1 className="mt-2 text-3xl font-medium tracking-tight">{round.course}</h1>
         <div className="mt-1 text-sm text-ink-muted">
           {new Date(round.date).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
@@ -90,6 +98,8 @@ export default function RoundDetailPage() {
           })}
         </ul>
       </section>
+
+      <SideBetsSection round={round} isOwner={isOwner} onChange={refresh} />
 
       <div className="space-y-2">
         {!round.results ? (
@@ -122,5 +132,162 @@ export default function RoundDetailPage() {
         </button>
       )}
     </main>
+  );
+}
+
+function SideBetsSection({
+  round,
+  isOwner,
+  onChange,
+}: {
+  round: Round;
+  isOwner: boolean;
+  onChange: () => void | Promise<void>;
+}) {
+  const [adding, setAdding] = useState(false);
+  const [desc, setDesc] = useState('');
+  const [fromId, setFromId] = useState<string>(round.players[0]?.id ?? '');
+  const [toId, setToId] = useState<string>(round.players[1]?.id ?? '');
+  const [amount, setAmount] = useState<string>('');
+  const [busy, setBusy] = useState(false);
+  const sideBets = round.sideBets ?? [];
+
+  function name(id: string) {
+    return round.players.find((p) => p.id === id)?.name ?? '?';
+  }
+
+  async function handleAdd() {
+    const amt = Number(amount);
+    if (!fromId || !toId || fromId === toId || !Number.isFinite(amt) || amt <= 0) return;
+    setBusy(true);
+    await addSideBet({
+      roundId: round.id,
+      description: desc.trim(),
+      fromPlayerId: fromId,
+      toPlayerId: toId,
+      amount: amt,
+    });
+    setBusy(false);
+    setAdding(false);
+    setDesc('');
+    setAmount('');
+    await onChange();
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm('Remove this side bet?')) return;
+    await deleteSideBet(id, round.id);
+    await onChange();
+  }
+
+  return (
+    <section className="space-y-2">
+      <div className="flex items-center justify-between">
+        <h2 className="eyebrow">Side bets</h2>
+        {isOwner && !adding && (
+          <button
+            onClick={() => setAdding(true)}
+            className="text-xs text-accent hover:text-accent-dim inline-flex items-center gap-1"
+          >
+            <Plus className="w-3 h-3" strokeWidth={2.5} /> Add
+          </button>
+        )}
+      </div>
+
+      {sideBets.length === 0 && !adding && (
+        <div className="card text-center text-ink-muted py-4 text-xs">
+          {isOwner ? 'Add a closest-to-pin, longest-drive, or any extra wager.' : 'No side bets.'}
+        </div>
+      )}
+
+      {sideBets.length > 0 && (
+        <ul className="card divide-y divide-line py-0">
+          {sideBets.map((sb) => (
+            <li key={sb.id} className="row items-start py-3 first:pt-3 last:pb-3">
+              <div className="min-w-0 flex-1">
+                {sb.description && (
+                  <div className="font-medium truncate">{sb.description}</div>
+                )}
+                <div className="text-xs text-ink-muted mt-0.5">
+                  {name(sb.fromPlayerId)} <span className="text-ink-faint">→</span> {name(sb.toPlayerId)}
+                </div>
+              </div>
+              <div className="text-right shrink-0">
+                <div className="font-medium">${sb.amount.toFixed(2)}</div>
+                {isOwner && (
+                  <button
+                    onClick={() => handleDelete(sb.id)}
+                    className="text-xs text-ink-faint hover:text-red-400 mt-0.5"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {adding && isOwner && (
+        <div className="card space-y-2">
+          <input
+            autoFocus
+            className="input"
+            placeholder="Description (e.g. closest to pin #7)"
+            value={desc}
+            onChange={(e) => setDesc(e.target.value)}
+          />
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="label text-xs">From</label>
+              <select className="input" value={fromId} onChange={(e) => setFromId(e.target.value)}>
+                {round.players.map((p) => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="label text-xs">To</label>
+              <select className="input" value={toId} onChange={(e) => setToId(e.target.value)}>
+                {round.players.map((p) => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="label text-xs">Amount ($)</label>
+            <input
+              type="number"
+              step="0.01"
+              min={0}
+              className="input"
+              placeholder="5"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+            />
+          </div>
+          {fromId === toId && (
+            <p className="text-xs text-red-400">Pick two different players.</p>
+          )}
+          <div className="flex gap-2 pt-1">
+            <button
+              onClick={() => { setAdding(false); setDesc(''); setAmount(''); }}
+              className="btn-secondary flex-1"
+              disabled={busy}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleAdd}
+              disabled={busy || fromId === toId || !amount || Number(amount) <= 0}
+              className="btn-primary flex-1"
+            >
+              {busy ? 'Adding…' : 'Save bet'}
+            </button>
+          </div>
+        </div>
+      )}
+    </section>
   );
 }

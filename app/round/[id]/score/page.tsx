@@ -4,10 +4,6 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { getRound, saveRoundResults } from '../../../../lib/db';
-import { calculateNassau } from '../../../../lib/betting/nassau';
-import { calculateSkins } from '../../../../lib/betting/skins';
-import { calculateWolf } from '../../../../lib/betting/wolf';
-import { simplifyDebts } from '../../../../lib/betting/settle';
 import type { Round, RoundResults } from '../../../../types';
 
 export default function ScoreEntryPage() {
@@ -43,6 +39,11 @@ function ScoreEntry({ round, onSaved }: { round: Round; onSaved: () => void }) {
       for (const p of round.players) m[p.id] = 0;
       return { type: 'skins', skinsByPlayer: m };
     }
+    if (fmt.type === 'match') {
+      const m: Record<string, number> = {};
+      for (const p of round.players) m[p.id] = 0;
+      return { type: 'match', scoresByPlayer: m };
+    }
     const m: Record<string, number> = {};
     for (const p of round.players) m[p.id] = 0;
     return { type: 'wolf', pointsByPlayer: m };
@@ -52,28 +53,15 @@ function ScoreEntry({ round, onSaved }: { round: Round; onSaved: () => void }) {
   const [busy, setBusy] = useState(false);
 
   async function handleSave() {
-    let debts;
     let toSave: RoundResults = results;
     if (results.type === 'nassau' && fmt.type === 'nassau') {
       const scores = Object.fromEntries(
         Object.entries(results.scores).map(([k, v]) => [k, { ...v, total: v.total || v.f9 + v.b9 }]),
       );
-      debts = calculateNassau(round.players, scores, fmt.stakes);
       toSave = { ...results, scores };
-    } else if (results.type === 'skins' && fmt.type === 'skins') {
-      debts = calculateSkins(round.players, results.skinsByPlayer, fmt.stakePerSkin);
-    } else if (results.type === 'wolf' && fmt.type === 'wolf') {
-      debts = calculateWolf(round.players, results.pointsByPlayer, fmt.stakePerPoint);
-    } else {
-      return;
     }
-    const payouts = simplifyDebts(debts, round.players);
     setBusy(true);
-    await saveRoundResults(
-      round.id,
-      toSave,
-      payouts.map((p) => ({ fromPlayerId: p.fromPlayerId, toPlayerId: p.toPlayerId, amount: p.amount })),
-    );
+    await saveRoundResults(round.id, toSave);
     setBusy(false);
     onSaved();
   }
@@ -159,6 +147,29 @@ function ScoreEntry({ round, onSaved }: { round: Round; onSaved: () => void }) {
               />
             </div>
           ))}
+        </div>
+      )}
+
+      {results.type === 'match' && (
+        <div className="space-y-3">
+          {round.players.map((p, i) => (
+            <div key={p.id} className="card flex items-center justify-between">
+              <div className={`font-medium ${i === 0 ? 'text-accent' : ''}`}>{p.name}</div>
+              <input
+                type="number"
+                className="input max-w-[120px]"
+                placeholder="Total strokes"
+                value={results.scoresByPlayer[p.id] || ''}
+                onChange={(e) =>
+                  setResults({
+                    ...results,
+                    scoresByPlayer: { ...results.scoresByPlayer, [p.id]: Number(e.target.value) },
+                  })
+                }
+              />
+            </div>
+          ))}
+          <p className="text-xs text-ink-faint">Lowest total wins the buy-in.</p>
         </div>
       )}
 

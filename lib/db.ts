@@ -4,11 +4,18 @@ import { createClient } from './supabase/client';
 import type {
   BetFormat,
   Friend,
+  PairwiseDebt,
   Payout,
   Profile,
   Round,
   RoundResults,
+  SideBet,
 } from '../types';
+import { calculateNassau } from './betting/nassau';
+import { calculateSkins } from './betting/skins';
+import { calculateWolf } from './betting/wolf';
+import { calculateMatch } from './betting/match';
+import { simplifyDebts } from './betting/settle';
 
 // ----- Types matching DB rows ----------------------------------
 
@@ -42,12 +49,23 @@ type PayoutRow = {
   status: 'pending' | 'settled';
 };
 
+type SideBetRow = {
+  id: string;
+  round_id: string;
+  description: string | null;
+  from_player_id: string;
+  to_player_id: string;
+  amount: number;
+  created_at: string;
+};
+
 // ----- Helpers --------------------------------------------------
 
 function rowsToRound(
   round: RoundRow,
   players: RoundPlayerRow[],
   payouts: PayoutRow[],
+  sideBets: SideBetRow[] = [],
 ): Round {
   return {
     id: round.id,
@@ -73,6 +91,13 @@ function rowsToRound(
       toPlayerId: p.to_player_id,
       amount: Number(p.amount),
       status: p.status,
+    })),
+    sideBets: sideBets.map((s) => ({
+      id: s.id,
+      description: s.description ?? '',
+      fromPlayerId: s.from_player_id,
+      toPlayerId: s.to_player_id,
+      amount: Number(s.amount),
     })),
   };
 }
@@ -143,9 +168,10 @@ export async function getRounds(): Promise<Round[]> {
   if (rounds.length === 0) return [];
 
   const roundIds = rounds.map((r) => r.id);
-  const [{ data: players }, { data: payouts }] = await Promise.all([
+  const [{ data: players }, { data: payouts }, { data: sideBets }] = await Promise.all([
     supabase.from('round_players').select('*').in('round_id', roundIds),
     supabase.from('payouts').select('*').in('round_id', roundIds),
+    supabase.from('side_bets').select('*').in('round_id', roundIds),
   ]);
 
   return rounds.map((r) =>
@@ -153,19 +179,26 @@ export async function getRounds(): Promise<Round[]> {
       r as RoundRow,
       ((players ?? []) as RoundPlayerRow[]).filter((p) => p.round_id === r.id),
       ((payouts ?? []) as PayoutRow[]).filter((p) => p.round_id === r.id),
+      ((sideBets ?? []) as SideBetRow[]).filter((s) => s.round_id === r.id),
     ),
   );
 }
 
 export async function getRound(id: string): Promise<Round | null> {
   const supabase = createClient();
-  const [{ data: round }, { data: players }, { data: payouts }] = await Promise.all([
+  const [{ data: round }, { data: players }, { data: payouts }, { data: sideBets }] = await Promise.all([
     supabase.from('rounds').select('*').eq('id', id).single(),
     supabase.from('round_players').select('*').eq('round_id', id),
     supabase.from('payouts').select('*').eq('round_id', id),
+    supabase.from('side_bets').select('*').eq('round_id', id),
   ]);
   if (!round) return null;
-  return rowsToRound(round as RoundRow, (players ?? []) as RoundPlayerRow[], (payouts ?? []) as PayoutRow[]);
+  return rowsToRound(
+    round as RoundRow,
+    (players ?? []) as RoundPlayerRow[],
+    (payouts ?? []) as PayoutRow[],
+    (sideBets ?? []) as SideBetRow[],
+  );
 }
 
 export type NewPlayerInput = {
@@ -221,22 +254,86 @@ export async function createRound(input: {
 export async function saveRoundResults(
   roundId: string,
   results: RoundResults,
-  payouts: Omit<Payout, 'id' | 'status'>[],
 ): Promise<void> {
   const supabase = createClient();
   await supabase.from('rounds').update({ results, settled: false }).eq('id', roundId);
-  // replace payouts
+  await recalculatePayouts(roundId);
+}
+
+/**
+ * Pulls current results + side bets and rebuilds the payouts table.
+ * Side bets are folded into the same simplification pass as the main bet.
+ */
+export async function recalculatePayouts(roundId: string): Promise<void> {
+  const round = await getRound(roundId);
+  if (!round) return;
+  const supabase = createClient();
+  const debts: PairwiseDebt[] = [];
+  const r = round.results;
+  const f = round.format;
+  if (r && r.type === 'nassau' && f.type === 'nassau') {
+    debts.push(...calculateNassau(round.players, r.scores, f.stakes));
+  } else if (r && r.type === 'skins' && f.type === 'skins') {
+    debts.push(...calculateSkins(round.players, r.skinsByPlayer, f.stakePerSkin));
+  } else if (r && r.type === 'wolf' && f.type === 'wolf') {
+    debts.push(...calculateWolf(round.players, r.pointsByPlayer, f.stakePerPoint));
+  } else if (r && r.type === 'match' && f.type === 'match') {
+    debts.push(...calculateMatch(round.players, r.scoresByPlayer, f.buyIn));
+  }
+  for (const sb of round.sideBets ?? []) {
+    debts.push({ from: sb.fromPlayerId, to: sb.toPlayerId, amount: sb.amount });
+  }
+  const payouts = simplifyDebts(debts, round.players);
+
   await supabase.from('payouts').delete().eq('round_id', roundId);
-  if (payouts.length === 0) return;
-  await supabase.from('payouts').insert(
-    payouts.map((p) => ({
-      round_id: roundId,
-      from_player_id: p.fromPlayerId,
-      to_player_id: p.toPlayerId,
-      amount: p.amount,
-      status: 'pending',
-    })),
-  );
+  if (payouts.length > 0) {
+    await supabase.from('payouts').insert(
+      payouts.map((p) => ({
+        round_id: roundId,
+        from_player_id: p.fromPlayerId,
+        to_player_id: p.toPlayerId,
+        amount: p.amount,
+        status: 'pending',
+      })),
+    );
+  }
+  await supabase.from('rounds').update({ settled: false }).eq('id', roundId);
+}
+
+export async function addSideBet(input: {
+  roundId: string;
+  description: string;
+  fromPlayerId: string;
+  toPlayerId: string;
+  amount: number;
+}): Promise<SideBet | null> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from('side_bets')
+    .insert({
+      round_id: input.roundId,
+      description: input.description.trim() || null,
+      from_player_id: input.fromPlayerId,
+      to_player_id: input.toPlayerId,
+      amount: input.amount,
+    })
+    .select('*')
+    .single();
+  if (error || !data) return null;
+  await recalculatePayouts(input.roundId);
+  return {
+    id: data.id,
+    description: data.description ?? '',
+    fromPlayerId: data.from_player_id,
+    toPlayerId: data.to_player_id,
+    amount: Number(data.amount),
+  };
+}
+
+export async function deleteSideBet(sideBetId: string, roundId: string): Promise<void> {
+  const supabase = createClient();
+  await supabase.from('side_bets').delete().eq('id', sideBetId);
+  await recalculatePayouts(roundId);
 }
 
 export async function togglePayout(payoutId: string, roundId: string): Promise<void> {

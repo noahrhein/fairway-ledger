@@ -13,7 +13,7 @@ import {
 } from '../../../lib/db';
 import type { BetFormat, Friend } from '../../../types';
 
-type FormatType = 'nassau' | 'skins' | 'wolf';
+type FormatType = 'nassau' | 'skins' | 'wolf' | 'match';
 type Slot = { friendId: string | null; userId: string | null; name: string; venmo: string };
 
 export default function NewRoundPage() {
@@ -30,6 +30,7 @@ export default function NewRoundPage() {
   const [nassauStakes, setNassauStakes] = useState({ f9: 5, b9: 5, total: 10 });
   const [skinsStake, setSkinsStake] = useState(2);
   const [wolfStake, setWolfStake] = useState(1);
+  const [matchBuyIn, setMatchBuyIn] = useState(20);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -44,18 +45,28 @@ export default function NewRoundPage() {
     })();
   }, []);
 
+  const isMatch = formatType === 'match';
+  const maxPlayers = isMatch ? 2 : 4;
   const canSubmit =
     course.trim().length > 0 &&
     slots.length >= 2 &&
+    (!isMatch || slots.length === 2) &&
     slots.every((s) => s.name.trim().length > 0) &&
     new Set(slots.map((s) => s.name.trim().toLowerCase())).size === slots.length &&
     !busy;
+
+  function pickFormat(t: FormatType) {
+    setFormatType(t);
+    if (t === 'match' && slots.length > 2) {
+      setSlots((s) => s.slice(0, 2));
+    }
+  }
 
   function updateSlot(i: number, patch: Partial<Slot>) {
     setSlots((arr) => arr.map((s, idx) => (idx === i ? { ...s, ...patch } : s)));
   }
   function addSlot() {
-    if (slots.length < 4) setSlots((s) => [...s, { friendId: null, userId: null, name: '', venmo: '' }]);
+    if (slots.length < maxPlayers) setSlots((s) => [...s, { friendId: null, userId: null, name: '', venmo: '' }]);
   }
   function removeSlot(i: number) {
     if (i === 0) return;
@@ -74,6 +85,7 @@ export default function NewRoundPage() {
   function buildFormat(): BetFormat {
     if (formatType === 'nassau') return { type: 'nassau', stakes: nassauStakes };
     if (formatType === 'skins') return { type: 'skins', stakePerSkin: skinsStake };
+    if (formatType === 'match') return { type: 'match', buyIn: matchBuyIn };
     return { type: 'wolf', stakePerPoint: wolfStake };
   }
 
@@ -126,7 +138,7 @@ export default function NewRoundPage() {
       <section className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="eyebrow">Players</h2>
-          {slots.length < 4 && (
+          {slots.length < maxPlayers && (
             <button onClick={addSlot} className="text-xs text-accent hover:text-accent-dim">+ Add player</button>
           )}
         </div>
@@ -179,16 +191,19 @@ export default function NewRoundPage() {
       <section className="space-y-3">
         <h2 className="eyebrow">Format</h2>
         <div className="seg-group">
-          {(['nassau', 'skins', 'wolf'] as FormatType[]).map((t) => (
+          {(['nassau', 'skins', 'wolf', 'match'] as FormatType[]).map((t) => (
             <button
               key={t}
-              onClick={() => setFormatType(t)}
+              onClick={() => pickFormat(t)}
               className={`seg capitalize ${formatType === t ? 'seg-active' : ''}`}
             >
-              {t}
+              {t === 'match' ? 'Match' : t}
             </button>
           ))}
         </div>
+        {isMatch && (
+          <p className="text-xs text-ink-faint">Match play is heads-up — exactly 2 players, lowest score wins the buy-in.</p>
+        )}
 
         {formatType === 'nassau' && (
           <div className="card grid grid-cols-3 gap-2">
@@ -215,6 +230,13 @@ export default function NewRoundPage() {
           <div className="card">
             <label className="label">Stake per point ($)</label>
             <input type="number" className="input" value={wolfStake} onChange={(e) => setWolfStake(Number(e.target.value))} />
+          </div>
+        )}
+        {formatType === 'match' && (
+          <div className="card">
+            <label className="label">Buy-in ($)</label>
+            <input type="number" className="input" value={matchBuyIn} onChange={(e) => setMatchBuyIn(Number(e.target.value))} />
+            <p className="text-xs text-ink-faint mt-1">Loser pays the winner this amount.</p>
           </div>
         )}
       </section>

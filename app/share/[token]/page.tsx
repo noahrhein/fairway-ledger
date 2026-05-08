@@ -68,7 +68,8 @@ export default function SharePage() {
   const stake =
     fmt.type === 'nassau' ? `Nassau · F9 $${fmt.stakes.f9} / B9 $${fmt.stakes.b9} / Total $${fmt.stakes.total}`
     : fmt.type === 'skins' ? `Skins · $${fmt.stakePerSkin} per skin`
-    : `Wolf · $${fmt.stakePerPoint} per point`;
+    : fmt.type === 'wolf' ? `Wolf · $${fmt.stakePerPoint} per point`
+    : `Match · $${fmt.buyIn} buy-in`;
 
   return (
     <main className="space-y-6">

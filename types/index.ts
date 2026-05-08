@@ -8,12 +8,22 @@ export type Player = {
 export type BetFormat =
   | { type: 'nassau'; stakes: { f9: number; b9: number; total: number } }
   | { type: 'skins'; stakePerSkin: number }
-  | { type: 'wolf'; stakePerPoint: number };
+  | { type: 'wolf'; stakePerPoint: number }
+  | { type: 'match'; buyIn: number };
 
 export type RoundResults =
   | { type: 'nassau'; scores: Record<string, { f9: number; b9: number; total: number }> }
   | { type: 'skins'; skinsByPlayer: Record<string, number> }
-  | { type: 'wolf'; pointsByPlayer: Record<string, number> };
+  | { type: 'wolf'; pointsByPlayer: Record<string, number> }
+  | { type: 'match'; scoresByPlayer: Record<string, number> };
+
+export type SideBet = {
+  id: string;
+  description: string;
+  fromPlayerId: string;
+  toPlayerId: string;
+  amount: number;
+};
 
 export type Payout = {
   id: string;
@@ -31,6 +41,7 @@ export type Round = {
   format: BetFormat;
   results?: RoundResults;
   payouts?: Payout[];
+  sideBets?: SideBet[];
   settled: boolean;
   createdAt: string;
   ownerId: string;
