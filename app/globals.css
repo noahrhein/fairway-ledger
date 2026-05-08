@@ -30,8 +30,18 @@ body {
 
 .input {
   @apply w-full rounded-xl border border-line bg-white/[0.03] px-3 py-2.5 text-ink placeholder:text-ink-faint outline-none transition;
+  -webkit-appearance: none;
+  appearance: none;
+  min-width: 0;
 }
 .input:focus { @apply border-accent/60 bg-white/[0.05]; }
+.input[type="date"] { min-height: 2.75rem; }
+.input[type="date"]::-webkit-date-and-time-value { text-align: left; }
+.input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.7);
+  cursor: pointer;
+  margin-left: auto;
+}
 .label { @apply block text-xs font-medium text-ink-muted mb-1.5 uppercase tracking-wider; }
 
 /* segmented pill */
