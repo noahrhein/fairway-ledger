@@ -67,6 +67,7 @@ export type Profile = {
   homeState?: string | null;
   handicap?: number | null;
   preferredGames?: GameKey[];
+  onboardedAt?: string | null;
 };
 
 export type LeaderboardEntry = {

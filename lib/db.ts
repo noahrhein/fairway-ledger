@@ -116,7 +116,7 @@ export async function getProfile(): Promise<Profile | null> {
   if (!user) return null;
   const { data } = await supabase
     .from('profiles')
-    .select('id, display_name, venmo_handle, home_state, handicap, preferred_games')
+    .select('id, display_name, venmo_handle, home_state, handicap, preferred_games, onboarded_at')
     .eq('id', user.id)
     .single();
   if (!data) return null;
@@ -127,7 +127,25 @@ export async function getProfile(): Promise<Profile | null> {
     homeState: data.home_state ?? null,
     handicap: data.handicap !== null && data.handicap !== undefined ? Number(data.handicap) : null,
     preferredGames: (data.preferred_games ?? []) as Profile['preferredGames'],
+    onboardedAt: data.onboarded_at ?? null,
   };
+}
+
+/**
+ * True when the signed-in user still needs to go through onboarding.
+ * Returns false (no prompt) if not signed in, so we don't redirect on /login.
+ */
+export async function needsOnboarding(): Promise<boolean> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+  const { data } = await supabase
+    .from('profiles')
+    .select('onboarded_at')
+    .eq('id', user.id)
+    .single();
+  // No profile row yet, or onboarded_at is null  =>  needs onboarding.
+  return !data || !data.onboarded_at;
 }
 
 export async function saveProfile(input: {
@@ -136,18 +154,30 @@ export async function saveProfile(input: {
   homeState?: string | null;
   handicap?: number | null;
   preferredGames?: string[];
+  /** When true (default), stamps onboarded_at so user isn't prompted again. */
+  markOnboarded?: boolean;
 }): Promise<boolean> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return false;
-  const { error } = await supabase.from('profiles').upsert({
+  const row: Record<string, unknown> = {
     id: user.id,
     display_name: input.displayName,
     venmo_handle: input.venmoHandle ?? null,
     home_state: input.homeState ?? null,
     handicap: input.handicap ?? null,
     preferred_games: input.preferredGames ?? [],
-  });
+  };
+  // Stamp onboarded_at on first save (idempotent — only sets if null).
+  if (input.markOnboarded !== false) {
+    const { data: existing } = await supabase
+      .from('profiles')
+      .select('onboarded_at')
+      .eq('id', user.id)
+      .single();
+    if (!existing?.onboarded_at) row.onboarded_at = new Date().toISOString();
+  }
+  const { error } = await supabase.from('profiles').upsert(row);
   return !error;
 }
 

@@ -10,20 +10,15 @@ export async function GET(request: NextRequest) {
     const supabase = createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      // Check if profile is complete; if not, route to onboarding.
+      // Route to onboarding if user hasn't completed it (onboarded_at is null).
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('display_name')
+          .select('onboarded_at')
           .eq('id', user.id)
           .single();
-        if (!profile || !profile.display_name || profile.display_name.includes('@') === false && profile.display_name.length < 1) {
-          return NextResponse.redirect(`${origin}/onboarding?next=${encodeURIComponent(next)}`);
-        }
-        // First-time users (auto-created profile uses email prefix) — let them confirm name.
-        const isFirstTime = profile.display_name === user.email?.split('@')[0];
-        if (isFirstTime) {
+        if (!profile?.onboarded_at) {
           return NextResponse.redirect(`${origin}/onboarding?next=${encodeURIComponent(next)}`);
         }
       }

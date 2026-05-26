@@ -53,18 +53,15 @@ function LoginInner() {
       setError(error?.message ?? 'That code did not work. Try again.');
       return;
     }
-    // Decide where to send them: onboarding if first-time, else `next`.
+    // Decide where to send them: onboarding if they haven't completed it, else `next`.
     const userId = data.session.user.id;
     const { data: profile } = await supabase
       .from('profiles')
-      .select('display_name')
+      .select('onboarded_at')
       .eq('id', userId)
       .single();
-    const emailPrefix = data.session.user.email?.split('@')[0];
-    const isFirstTime =
-      !profile?.display_name ||
-      (emailPrefix && profile.display_name === emailPrefix);
-    if (isFirstTime) {
+    const needsOnboarding = !profile?.onboarded_at;
+    if (needsOnboarding) {
       router.replace(`/onboarding?next=${encodeURIComponent(next)}`);
     } else {
       router.replace(next);

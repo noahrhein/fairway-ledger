@@ -2,6 +2,7 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 const PUBLIC_PATHS = ['/login', '/auth', '/share'];
+const ONBOARDING_PATH = '/onboarding';
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -35,6 +36,22 @@ export async function updateSession(request: NextRequest) {
     url.pathname = '/login';
     url.searchParams.set('next', path);
     return NextResponse.redirect(url);
+  }
+
+  // Force-redirect signed-in users to onboarding until they complete it.
+  // Allow them to access /onboarding itself, /auth/* (signout), and /share.
+  if (user && !isPublic && path !== ONBOARDING_PATH) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('onboarded_at')
+      .eq('id', user.id)
+      .single();
+    if (!profile?.onboarded_at) {
+      const url = request.nextUrl.clone();
+      url.pathname = ONBOARDING_PATH;
+      url.searchParams.set('next', path);
+      return NextResponse.redirect(url);
+    }
   }
 
   return supabaseResponse;
