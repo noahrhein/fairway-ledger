@@ -75,7 +75,7 @@ function LoginInner() {
         <div className="eyebrow text-ink-muted/80">Fairway</div>
         <h1 className="text-3xl font-medium tracking-tight">Sign in</h1>
         <p className="text-sm text-ink-muted">
-          {step === 'email' ? "We'll email you a 6-digit code." : `Enter the code we sent to ${email}.`}
+          {step === 'email' ? "We'll email you a sign-in code." : `Enter the code we sent to ${email}.`}
         </p>
       </header>
 
@@ -99,22 +99,22 @@ function LoginInner() {
         </form>
       ) : (
         <form onSubmit={verify} className="card space-y-3">
-          <label className="label" htmlFor="code">6-digit code</label>
+          <label className="label" htmlFor="code">Verification code</label>
           <input
             id="code"
             inputMode="numeric"
             autoComplete="one-time-code"
             pattern="[0-9]*"
-            maxLength={6}
+            maxLength={10}
             required
             autoFocus
-            className="input text-center text-2xl tracking-[0.5em] font-medium"
+            className="input text-center text-2xl tracking-[0.3em] font-medium"
             placeholder="······"
             value={code}
-            onChange={(e) => setCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
+            onChange={(e) => setCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 10))}
           />
           {error && <p className="text-xs text-red-400">{error}</p>}
-          <button type="submit" disabled={busy || code.length !== 6} className="btn-primary w-full">
+          <button type="submit" disabled={busy || code.length < 6} className="btn-primary w-full">
             {busy ? 'Verifying…' : 'Sign in'}
           </button>
           <div className="flex items-center justify-between pt-1">
