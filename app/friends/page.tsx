@@ -243,9 +243,9 @@ function UserSearchSection({
       <h2 className="eyebrow">Find friends on Fairway</h2>
       <div className="card space-y-3">
         <div className="relative">
-          <Search aria-hidden className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint" strokeWidth={2} />
+          <Search aria-hidden className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint pointer-events-none z-10" strokeWidth={2} />
           <input
-            className="input pl-9"
+            className="input !pl-10"
             placeholder="Search by name"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
