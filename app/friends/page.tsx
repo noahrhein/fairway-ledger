@@ -19,6 +19,7 @@ export default function FriendsPage() {
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState('');
   const [venmo, setVenmo] = useState('');
+  const [phonebookFilter, setPhonebookFilter] = useState('');
 
   useEffect(() => { void refresh(); }, []);
 
@@ -63,6 +64,15 @@ export default function FriendsPage() {
     () => new Set(friends.map((f) => f.friendUserId).filter(Boolean) as string[]),
     [friends],
   );
+
+  const filteredFriends = useMemo(() => {
+    const q = phonebookFilter.trim().toLowerCase();
+    if (!q) return friends;
+    return friends.filter((f) => {
+      const handle = (f.venmoHandle ?? '').toLowerCase();
+      return f.name.toLowerCase().includes(q) || handle.includes(q);
+    });
+  }, [friends, phonebookFilter]);
 
   return (
     <main className="space-y-6">
@@ -129,23 +139,44 @@ export default function FriendsPage() {
       <section className="space-y-2">
         <div className="flex items-center justify-between">
           <h2 className="eyebrow">Phonebook</h2>
-          <span className="text-xs text-ink-faint">{friends.length}</span>
+          <span className="text-xs text-ink-faint">
+            {phonebookFilter ? `${filteredFriends.length} / ${friends.length}` : friends.length}
+          </span>
         </div>
         {!ready ? null : friends.length === 0 ? (
           <div className="card text-ink-muted text-center py-8 text-sm">
             Add friends so you can pick them when starting a round.
           </div>
         ) : (
-          <ul className="card divide-y divide-line py-0">
-            {friends.map((f) => (
-              <FriendRow
-                key={f.id}
-                friend={f}
-                onDelete={() => handleDelete(f.id)}
-                onUpdate={(patch) => updateFriend(f, patch)}
-              />
-            ))}
-          </ul>
+          <>
+            {friends.length > 4 && (
+              <div className="relative">
+                <Search aria-hidden className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint pointer-events-none z-10" strokeWidth={2} />
+                <input
+                  className="input !pl-10"
+                  placeholder="Filter phonebook"
+                  value={phonebookFilter}
+                  onChange={(e) => setPhonebookFilter(e.target.value)}
+                />
+              </div>
+            )}
+            {filteredFriends.length === 0 ? (
+              <div className="card text-ink-muted text-center py-6 text-sm">
+                No friends match "{phonebookFilter}".
+              </div>
+            ) : (
+              <ul className="card divide-y divide-line py-0">
+                {filteredFriends.map((f) => (
+                  <FriendRow
+                    key={f.id}
+                    friend={f}
+                    onDelete={() => handleDelete(f.id)}
+                    onUpdate={(patch) => updateFriend(f, patch)}
+                  />
+                ))}
+              </ul>
+            )}
+          </>
         )}
       </section>
     </main>
