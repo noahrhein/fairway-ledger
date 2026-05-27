@@ -263,7 +263,10 @@ export async function createRound(input: {
 
   const playerRows = input.players.map((p, slot) => ({
     round_id: round.id,
-    user_id: p.userId ?? null,
+    // Safety net: the owner's first slot must always be linked to their auth user,
+    // even if the UI forgot to pass it. Otherwise the leaderboard can't attribute
+    // their net to their account.
+    user_id: slot === 0 ? (p.userId ?? user.id) : (p.userId ?? null),
     name: p.name,
     venmo_handle: p.venmoHandle ?? null,
     slot,

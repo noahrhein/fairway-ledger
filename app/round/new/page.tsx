@@ -37,9 +37,15 @@ export default function NewRoundPage() {
     (async () => {
       const [list, profile, user] = await Promise.all([getFriends(), getProfile(), getCurrentUser()]);
       setFriends(list);
-      if (profile && user) {
+      // Always link slot 0 to the signed-in user, even if profile is missing.
+      if (user) {
         setSlots((s) => s.map((slot, i) => i === 0
-          ? { friendId: null, userId: user.id, name: profile.displayName, venmo: profile.venmoHandle ?? '' }
+          ? {
+              friendId: null,
+              userId: user.id,
+              name: profile?.displayName ?? slot.name,
+              venmo: profile?.venmoHandle ?? slot.venmo,
+            }
           : slot));
       }
     })();
