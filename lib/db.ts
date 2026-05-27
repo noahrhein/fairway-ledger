@@ -415,14 +415,20 @@ export async function saveFriend(input: {
   id?: string;
   name: string;
   venmoHandle?: string;
+  friendUserId?: string | null;
 }): Promise<Friend | null> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
   if (input.id) {
+    const update: Record<string, unknown> = {
+      name: input.name,
+      venmo_handle: input.venmoHandle ?? null,
+    };
+    if (input.friendUserId !== undefined) update.friend_user_id = input.friendUserId;
     const { data } = await supabase
       .from('friends')
-      .update({ name: input.name, venmo_handle: input.venmoHandle ?? null })
+      .update(update)
       .eq('id', input.id)
       .select('*')
       .single();
@@ -434,7 +440,12 @@ export async function saveFriend(input: {
   }
   const { data } = await supabase
     .from('friends')
-    .insert({ owner_id: user.id, name: input.name, venmo_handle: input.venmoHandle ?? null })
+    .insert({
+      owner_id: user.id,
+      name: input.name,
+      venmo_handle: input.venmoHandle ?? null,
+      friend_user_id: input.friendUserId ?? null,
+    })
     .select('*')
     .single();
   if (!data) return null;
@@ -442,6 +453,24 @@ export async function saveFriend(input: {
     id: data.id, name: data.name, venmoHandle: data.venmo_handle ?? undefined,
     friendUserId: data.friend_user_id, createdAt: data.created_at,
   };
+}
+
+// ----- User search ----------------------------------------------
+
+export type UserSearchHit = {
+  id: string;
+  displayName: string;
+  homeState: string | null;
+};
+
+export async function searchUsers(query: string): Promise<UserSearchHit[]> {
+  const trimmed = query.trim();
+  if (trimmed.length < 2) return [];
+  const supabase = createClient();
+  const { data, error } = await supabase.rpc('search_users', { q: trimmed });
+  if (error || !data) return [];
+  return (data as Array<{ id: string; display_name: string; home_state: string | null }>)
+    .map((r) => ({ id: r.id, displayName: r.display_name, homeState: r.home_state ?? null }));
 }
 
 export async function deleteFriend(id: string): Promise<void> {
