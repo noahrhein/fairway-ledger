@@ -11,7 +11,7 @@ import {
   getCurrentUser,
 } from '../../../lib/db';
 import type { Round } from '../../../types';
-import { Flag, Share2, Check, Plus } from 'lucide-react';
+import { Share2, Check, Plus } from 'lucide-react';
 
 export default function RoundDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -71,13 +71,17 @@ export default function RoundDetailPage() {
       </header>
 
       <section className="card-hero">
-        <div className="eyebrow text-ink-muted/70 capitalize">{fmt.type === 'match' ? 'Match Play' : fmt.type}</div>
-        <h1 className="mt-2 text-3xl font-medium tracking-tight">{round.course}</h1>
-        <div className="mt-1 text-sm text-ink-muted">
-          {new Date(round.date).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
+        <div className="flex items-start gap-4">
+          <ClubCrest course={round.course} />
+          <div className="min-w-0 flex-1">
+            <div className="eyebrow text-ink-muted/70 capitalize">{fmt.type === 'match' ? 'Match Play' : fmt.type}</div>
+            <h1 className="mt-1 text-3xl font-medium tracking-tight truncate">{round.course}</h1>
+            <div className="mt-1 text-sm text-ink-muted">
+              {new Date(round.date).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
+            </div>
+            <div className="mt-3 text-xs text-ink-muted">{stakeSummary}</div>
+          </div>
         </div>
-        <div className="mt-4 text-xs text-ink-muted">{stakeSummary}</div>
-        <Flag aria-hidden className="absolute right-5 top-5 w-6 h-6 text-ink-muted" strokeWidth={1.75} />
       </section>
 
       <section>
@@ -132,6 +136,24 @@ export default function RoundDetailPage() {
         </button>
       )}
     </main>
+  );
+}
+
+function ClubCrest({ course }: { course: string }) {
+  const initials =
+    (course || '?')
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((w) => w.charAt(0).toUpperCase())
+      .join('') || '?';
+  return (
+    <div
+      aria-hidden
+      className="shrink-0 w-16 h-16 rounded-full flex items-center justify-center serif font-semibold text-xl text-rolex-gold border border-rolex-gold/40 bg-rolex/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]"
+    >
+      {initials}
+    </div>
   );
 }
 

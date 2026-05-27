@@ -144,8 +144,10 @@ export default function FriendsPage() {
           </span>
         </div>
         {!ready ? null : friends.length === 0 ? (
-          <div className="card text-ink-muted text-center py-8 text-sm">
-            Add friends so you can pick them when starting a round.
+          <div className="card text-center py-10 space-y-2">
+            <User aria-hidden className="w-8 h-8 mx-auto text-ink-faint" strokeWidth={1.5} />
+            <div className="font-medium text-ink">Build your foursome</div>
+            <div className="text-xs text-ink-faint">Search above to add Fairway users, or tap + for a name-only entry.</div>
           </div>
         ) : (
           <>

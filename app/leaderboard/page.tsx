@@ -38,27 +38,33 @@ export default function LeaderboardPage() {
         <h1 className="text-2xl font-medium tracking-tight">Leaderboard</h1>
       </header>
 
-      <section className="card-hero">
-        <div className="eyebrow text-ink-muted/70">Your record</div>
-        <div className="mt-2 flex items-baseline gap-2">
-          <span className={`text-5xl font-medium tracking-tight ${you && you.net < 0 ? 'text-amber' : ''}`}>
-            {you ? (you.net >= 0 ? '+' : '−') : ''}${you ? Math.abs(you.net).toFixed(2) : '0.00'}
-          </span>
-        </div>
-        <div className="mt-2 text-sm text-ink-muted">
-          {you ? `${you.rounds} round${you.rounds === 1 ? '' : 's'} played` : 'No rounds played yet.'}
-        </div>
-        <Trophy aria-hidden className="absolute right-6 top-6 w-6 h-6 text-ink-muted" strokeWidth={1.75} />
-
-        {you && (
-          <div className="mt-5 inline-flex items-center gap-3 rounded-full bg-ink text-bg px-4 py-2 shadow-pill">
-            <span className="text-xs text-bg/60">Won</span>
-            <span className="text-sm font-medium">${you.received.toFixed(2)}</span>
-            <span className="text-xs text-bg/60">·</span>
-            <span className="text-xs text-bg/60">Paid</span>
-            <span className="text-sm font-medium">${you.paid.toFixed(2)}</span>
+      <section className="card-money">
+        <div className="relative z-10">
+          <div className="eyebrow text-rolex-ink/60">Your record</div>
+          <div className="mt-3 serif text-6xl font-medium leading-none">
+            <span className={
+              you && you.net > 0 ? 'text-rolex-gold'
+              : you && you.net < 0 ? 'text-loss'
+              : 'text-rolex-ink'
+            }>
+              {you ? (you.net > 0 ? '+' : you.net < 0 ? '−' : '') : ''}${you ? Math.abs(you.net).toFixed(2) : '0.00'}
+            </span>
           </div>
-        )}
+          <div className="mt-3 text-sm text-rolex-ink/70">
+            {you ? `${you.rounds} round${you.rounds === 1 ? '' : 's'} on the books` : 'No rounds played yet.'}
+          </div>
+          <Trophy aria-hidden className="absolute right-1 -top-2 w-7 h-7 text-rolex-gold/40" strokeWidth={1.5} />
+
+          {you && (
+            <div className="mt-5 inline-flex items-center gap-3 rounded-full bg-rolex-dim/60 border border-rolex-edge/30 px-4 py-2 backdrop-blur-sm">
+              <span className="text-[10px] uppercase tracking-wider text-rolex-ink/50">Won</span>
+              <span className="text-sm font-medium text-rolex-ink">${you.received.toFixed(2)}</span>
+              <span className="text-rolex-ink/30">·</span>
+              <span className="text-[10px] uppercase tracking-wider text-rolex-ink/50">Paid</span>
+              <span className="text-sm font-medium text-rolex-ink">${you.paid.toFixed(2)}</span>
+            </div>
+          )}
+        </div>
       </section>
 
       <div className="seg-group">
@@ -75,8 +81,10 @@ export default function LeaderboardPage() {
           <span className="text-xs text-ink-faint">{lb.length}</span>
         </div>
         {!ready ? null : lb.length === 0 ? (
-          <div className="card text-ink-muted text-center py-8 text-sm">
-            Play a round to populate the leaderboard.
+          <div className="card text-center py-10 space-y-2">
+            <Trophy aria-hidden className="w-8 h-8 mx-auto text-ink-faint" strokeWidth={1.5} />
+            <div className="font-medium text-ink">Standings open after the first round</div>
+            <div className="text-xs text-ink-faint">Play a round and the board fills itself in.</div>
           </div>
         ) : (
           <ul className="card divide-y divide-line py-0">
@@ -85,7 +93,9 @@ export default function LeaderboardPage() {
               const negative = entry.net < 0;
               return (
                 <li key={entry.key} className="row">
-                  <div className="row-icon text-sm font-medium">{i + 1}</div>
+                  <div className={`row-icon text-sm font-medium ${i === 0 ? 'serif text-rolex-gold border-rolex-gold/40' : ''}`}>
+                    {i + 1}
+                  </div>
                   <div className="min-w-0 flex-1">
                     <div className={`font-medium truncate ${entry.isYou ? 'text-accent' : ''}`}>{entry.name}</div>
                     <div className="text-xs text-ink-muted mt-0.5">
@@ -93,10 +103,10 @@ export default function LeaderboardPage() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className={`font-medium ${positive ? 'text-accent' : negative ? 'text-amber' : 'text-ink-muted'}`}>
-                      {positive ? '+' : negative ? '−' : ''}${Math.abs(entry.net).toFixed(2)}
+                    <div className={`serif text-xl font-medium leading-none ${positive ? 'text-accent' : negative ? 'text-loss' : 'text-ink-muted'}`}>
+                      {positive ? '+' : negative ? '−' : ''}${Math.abs(entry.net).toFixed(0)}
                     </div>
-                    <div className="text-[10px] uppercase tracking-wider text-ink-faint mt-0.5">
+                    <div className="text-[10px] uppercase tracking-wider text-ink-faint mt-1">
                       {entry.received > 0 || entry.paid > 0
                         ? `+${entry.received.toFixed(0)} / −${entry.paid.toFixed(0)}`
                         : '—'}

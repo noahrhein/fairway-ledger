@@ -49,23 +49,28 @@ export default function SettlePage() {
         <Link href={`/round/${round.id}`} className="btn-ghost -ml-3 mb-1 px-3 py-2">← {round.course}</Link>
       </header>
 
-      <section className="card-hero">
-        <div className="eyebrow text-ink-muted/70">Total to settle</div>
-        <div className="mt-2 text-5xl font-medium tracking-tight">${totalSettled.toFixed(2)}</div>
-        <div className="mt-2 text-sm text-ink-muted">
-          {payouts.length === 0 ? 'All square.' : `${payouts.length} payout${payouts.length === 1 ? '' : 's'}`}
-        </div>
-        <Flag aria-hidden className="absolute right-6 top-6 w-6 h-6 text-ink-muted" strokeWidth={1.75} />
-
-        {payouts.length > 0 && (
-          <div className="mt-5 inline-flex items-center gap-3 rounded-full bg-ink text-bg px-4 py-2 shadow-pill">
-            <span className="text-xs text-bg/60">Remaining</span>
-            <span className="text-sm font-medium">${remaining.toFixed(2)}</span>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-accent-soft text-accent">
-              {payouts.length - payouts.filter((p) => p.status !== 'settled').length}/{payouts.length} done
-            </span>
+      <section className="card-money">
+        <div className="relative z-10">
+          <div className="eyebrow text-rolex-ink/60">Total to settle</div>
+          <div className="mt-3 serif text-6xl font-medium leading-none text-rolex-ink">
+            ${totalSettled.toFixed(2)}
           </div>
-        )}
+          <div className="mt-3 text-sm text-rolex-ink/70">
+            {payouts.length === 0 ? 'All square.' : `${payouts.length} payout${payouts.length === 1 ? '' : 's'}`}
+          </div>
+          <Flag aria-hidden className="absolute right-1 -top-2 w-7 h-7 text-rolex-gold/40" strokeWidth={1.5} />
+
+          {payouts.length > 0 && (
+            <div className="mt-5 inline-flex items-center gap-3 rounded-full bg-rolex-dim/60 border border-rolex-edge/30 px-4 py-2 backdrop-blur-sm">
+              <span className="text-[10px] uppercase tracking-wider text-rolex-ink/50">Remaining</span>
+              <span className="text-sm font-medium text-rolex-ink">${remaining.toFixed(2)}</span>
+              <span className="text-rolex-ink/30">·</span>
+              <span className="text-[10px] uppercase tracking-wider text-rolex-gold">
+                {payouts.length - payouts.filter((p) => p.status !== 'settled').length}/{payouts.length} done
+              </span>
+            </div>
+          )}
+        </div>
       </section>
 
       {payouts.length === 0 ? (

@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -14,6 +16,15 @@ body {
   min-height: 100vh;
 }
 
+/* Premium serif numeral display — used for hero money figures.
+   Cormorant Garamond renders gracefully at large sizes and gives the
+   "scorecard / country club" feel. */
+.serif {
+  font-family: 'Cormorant Garamond', Garamond, Georgia, serif;
+  font-feature-settings: "lnum" 1, "tnum" 1;
+  letter-spacing: -0.01em;
+}
+
 .eyebrow { @apply text-[11px] font-medium tracking-[0.18em] uppercase text-ink-muted; }
 
 .btn { @apply inline-flex items-center justify-center rounded-full px-5 py-3.5 text-sm font-medium transition; }
@@ -27,6 +38,34 @@ body {
   @apply rounded-3xl p-6 border border-line/60 relative overflow-hidden;
   background-image: linear-gradient(160deg, #1c2657 0%, #0d1432 100%);
 }
+/* Rolex-green money hero — reserved for career earnings + total-to-settle.
+   The faint top sheen + gold edge evoke a leather-bound ledger. */
+.card-money {
+  @apply rounded-3xl p-6 relative overflow-hidden;
+  background-image: linear-gradient(165deg, #15523B 0%, #0A2D20 100%);
+  border: 1px solid rgba(201, 169, 97, 0.18);
+  box-shadow: 0 16px 40px -8px rgba(14,59,42,0.6),
+              inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.card-money::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 85% 10%, rgba(201,169,97,0.08), transparent 60%);
+  pointer-events: none;
+}
+
+/* Status pill — used on round cards. */
+.status-pill {
+  @apply inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium tracking-wide;
+}
+.status-open    { @apply bg-white/[0.06] text-ink-muted; }
+.status-pending { @apply bg-amber/15 text-amber; }
+.status-settled { @apply bg-accent/15 text-accent; }
+.status-dot { @apply w-1.5 h-1.5 rounded-full; }
+.status-dot-open    { @apply bg-ink-muted; }
+.status-dot-pending { @apply bg-amber animate-pulse; }
+.status-dot-settled { @apply bg-accent; }
 
 .input {
   @apply w-full rounded-xl border border-line bg-white/[0.03] px-3 py-2.5 text-ink placeholder:text-ink-faint outline-none transition;
