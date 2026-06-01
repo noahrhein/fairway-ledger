@@ -199,8 +199,8 @@ function PhoneMockup({
 function MockHeader({ title }: { title: string }) {
   return (
     <div className="pt-6 pb-2 px-3">
-      <div className="text-[6px] uppercase tracking-[0.18em] text-ink-faint font-semibold">Fairway</div>
-      <div className="text-[10px] font-semibold text-ink">{title}</div>
+      <div className="text-[5px] uppercase tracking-[0.18em] text-ink-faint font-semibold">Fairway</div>
+      <div className="text-[10px] font-semibold text-ink truncate">{title}</div>
     </div>
   );
 }
@@ -210,11 +210,11 @@ function DashboardMock() {
     <div className="text-[8px]">
       <MockHeader title="Ledger" />
       <div className="px-2">
-        <div className="card-money rounded-2xl p-3 relative text-center">
+        <div className="card-money rounded-2xl p-2.5 relative text-center">
           <div className="relative z-10">
-            <div className="text-[6px] uppercase tracking-[0.18em] text-rolex-ink/60 font-semibold">Career</div>
-            <div className="mt-1.5 display text-rolex-gold text-[26px] leading-none">+$284</div>
-            <div className="mt-1.5 text-[6px] text-rolex-ink/70">8 rounds on the books</div>
+            <div className="text-[5px] uppercase tracking-[0.18em] text-rolex-ink/60 font-semibold">Career</div>
+            <div className="mt-1 display text-rolex-gold text-[20px] leading-none whitespace-nowrap">+$284</div>
+            <div className="mt-1.5 text-[5px] text-rolex-ink/70">8 rounds on the books</div>
           </div>
         </div>
         <div className="mt-2 space-y-1.5">
@@ -224,14 +224,14 @@ function DashboardMock() {
             { course: 'Whistling Straits', date: 'Apr 28', net: '+$24', settled: true },
           ].map((r) => (
             <div key={r.course} className="card !p-2 flex items-center gap-1.5">
-              <div className="w-4 h-4 rounded-full bg-accent/10 border border-accent/30 flex items-center justify-center text-[5px] font-semibold text-accent">
+              <div className="shrink-0 w-4 h-4 rounded-full bg-accent/10 border border-accent/30 flex items-center justify-center text-[5px] font-semibold text-accent">
                 {r.course.split(' ').map((w) => w[0]).slice(0, 2).join('')}
               </div>
               <div className="min-w-0 flex-1">
                 <div className="text-[7px] font-semibold truncate">{r.course}</div>
                 <div className="text-[5px] text-ink-faint">{r.date}</div>
               </div>
-              <div className={`text-[8px] font-bold ${r.net.startsWith('+') ? 'text-accent' : 'text-loss'}`}>
+              <div className={`shrink-0 text-[8px] font-bold whitespace-nowrap ${r.net.startsWith('+') ? 'text-accent' : 'text-loss'}`}>
                 {r.net}
               </div>
             </div>
@@ -246,12 +246,12 @@ function RoundMock() {
   return (
     <div className="text-[8px]">
       <div className="pt-6 pb-2 px-3 flex items-center gap-1.5">
-        <div className="w-6 h-6 rounded-full flex items-center justify-center display text-[8px] text-accent border border-accent/40 bg-accent/5">
+        <div className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center display text-[8px] text-accent border border-accent/40 bg-accent/5">
           PB
         </div>
-        <div>
-          <div className="text-[6px] uppercase tracking-[0.15em] text-ink-faint font-semibold">Nassau</div>
-          <div className="text-[10px] font-semibold text-ink">Pebble Beach</div>
+        <div className="min-w-0 flex-1">
+          <div className="text-[5px] uppercase tracking-[0.18em] text-ink-faint font-semibold">Nassau</div>
+          <div className="text-[9px] font-semibold text-ink truncate">Pebble Beach</div>
         </div>
       </div>
       <div className="px-2 space-y-1.5">
@@ -285,11 +285,11 @@ function SettleMock() {
     <div className="text-[8px]">
       <MockHeader title="Settle up" />
       <div className="px-2">
-        <div className="card-money rounded-2xl p-3 relative text-center">
+        <div className="card-money rounded-2xl p-2.5 relative text-center">
           <div className="relative z-10">
-            <div className="text-[6px] uppercase tracking-[0.18em] text-rolex-ink/60 font-semibold">Total</div>
-            <div className="mt-1.5 display text-rolex-ink text-[26px] leading-none">$45.00</div>
-            <div className="mt-1.5 text-[6px] text-rolex-ink/70">2 payouts</div>
+            <div className="text-[5px] uppercase tracking-[0.18em] text-rolex-ink/60 font-semibold">Total</div>
+            <div className="mt-1 display text-rolex-ink text-[20px] leading-none whitespace-nowrap">$45.00</div>
+            <div className="mt-1.5 text-[5px] text-rolex-ink/70">2 payouts</div>
           </div>
         </div>
         <div className="mt-2 space-y-1.5">
@@ -299,15 +299,15 @@ function SettleMock() {
           ].map((p, i) => (
             <div key={i} className="card !p-2">
               <div className="flex items-center gap-1.5">
-                <div className="w-4 h-4 rounded-full bg-bg-sunken border border-line flex items-center justify-center text-[5px] font-semibold">
+                <div className="shrink-0 w-4 h-4 rounded-full bg-bg-sunken border border-line flex items-center justify-center text-[5px] font-semibold">
                   {p.from[0]}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="text-[7px] font-semibold">
+                  <div className="text-[7px] font-semibold truncate">
                     {p.from} <span className="text-ink-faint">→</span> {p.to}
                   </div>
                 </div>
-                <div className="text-[8px] font-bold text-ink">{p.amount}</div>
+                <div className="shrink-0 text-[8px] font-bold text-ink whitespace-nowrap">{p.amount}</div>
               </div>
               <div className={`mt-1 text-[6px] font-medium ${p.settled ? 'text-accent' : 'text-amber'}`}>
                 {p.settled ? <><Check className="inline w-2 h-2" /> Settled</> : 'Open Venmo'}
