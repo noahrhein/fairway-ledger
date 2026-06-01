@@ -23,7 +23,7 @@ export default function LandingPage() {
       {/* HERO */}
       <section className="px-5 pt-12 pb-8 max-w-[680px] mx-auto text-center md:pt-20">
         <div className="inline-flex items-center gap-2 rounded-full bg-bg-elevated border border-line px-3 py-1 text-[11px] text-ink-muted">
-          <span className="w-1.5 h-1.5 rounded-full bg-accent" /> No casinos. No house. Just the foursome.
+          <span className="w-1.5 h-1.5 rounded-full bg-accent" /> Bets, settled.
         </div>
         <h1 className="mt-6 display text-[44px] sm:text-[56px] md:text-[68px] leading-[1.02] text-ink">
           Settle the bet<br />
@@ -110,7 +110,7 @@ export default function LandingPage() {
 
       <footer className="px-5 pb-10 pt-8 border-t border-line text-center">
         <div className="text-xs text-ink-faint">
-          Fairway Ledger · Built for friends, not casinos.
+          Fairway Ledger · Bets, settled.
         </div>
       </footer>
     </div>
