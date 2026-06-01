@@ -160,7 +160,7 @@ export default function NewRoundPage() {
               {i > 0 && availableFriends.length > 0 && (
                 <button
                   onClick={() => setPickerFor(pickerFor === i ? null : i)}
-                  className="shrink-0 text-xs px-3 py-2 rounded-xl border border-line bg-white/[0.03] hover:bg-white/[0.06] text-ink-muted"
+                  className="shrink-0 text-xs px-3 py-2 rounded-xl border border-line bg-bg-elevated hover:bg-bg-sunken text-ink-muted"
                 >
                   Pick
                 </button>
@@ -175,7 +175,7 @@ export default function NewRoundPage() {
                   <li key={f.id}>
                     <button
                       onClick={() => pickFriend(i, f)}
-                      className="w-full text-left px-3 py-2.5 hover:bg-white/[0.04] flex items-center justify-between"
+                      className="w-full text-left px-3 py-2.5 hover:bg-bg-sunken flex items-center justify-between"
                     >
                       <span>{f.name}</span>
                       {f.venmoHandle && <span className="text-xs text-ink-muted">@{f.venmoHandle.replace(/^@/, '')}</span>}

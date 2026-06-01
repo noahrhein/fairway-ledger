@@ -38,7 +38,7 @@ export default function HomePage() {
   const netSign = career ? (career.net > 0 ? '+' : career.net < 0 ? '−' : '') : '';
   const netColor =
     career && career.net > 0 ? 'text-rolex-gold'
-    : career && career.net < 0 ? 'text-loss'
+    : career && career.net < 0 ? 'text-rolex-loss'
     : 'text-rolex-ink';
 
   return (
@@ -74,7 +74,7 @@ export default function HomePage() {
         <div className="relative z-10">
           <div className="eyebrow text-rolex-ink/60">Career earnings</div>
           <div className="mt-3 flex items-baseline gap-1">
-            <span className={`serif text-6xl font-medium leading-none ${netColor}`}>
+            <span className={`display text-6xl font-medium leading-none ${netColor}`}>
               {netSign}${ready ? Math.abs(career?.net ?? 0).toFixed(2) : '—'}
             </span>
           </div>
@@ -174,13 +174,13 @@ function ScoreboardRow({ round, userId }: { round: Round; userId: string | null 
 
           <div className="text-right shrink-0">
             {viewerNet !== null && total > 0 ? (
-              <div className={`serif text-2xl font-medium leading-none ${
+              <div className={`display text-2xl font-medium leading-none ${
                 viewerNet > 0 ? 'text-accent' : viewerNet < 0 ? 'text-loss' : 'text-ink-muted'
               }`}>
                 {viewerNet > 0 ? '+' : viewerNet < 0 ? '−' : ''}${Math.abs(viewerNet).toFixed(0)}
               </div>
             ) : total > 0 ? (
-              <div className="serif text-2xl font-medium leading-none text-ink-muted">
+              <div className="display text-2xl font-medium leading-none text-ink-muted">
                 ${total.toFixed(0)}
               </div>
             ) : (
@@ -207,7 +207,7 @@ function CourseCrest({ course }: { course: string }) {
     .join('') || '?';
   return (
     <div
-      className="shrink-0 w-12 h-12 rounded-full flex items-center justify-center serif font-semibold text-sm text-rolex-gold border border-rolex-gold/30 bg-rolex/40"
+      className="shrink-0 w-12 h-12 rounded-full flex items-center justify-center display font-semibold text-sm text-rolex-gold border border-rolex-gold/30 bg-rolex/40"
       aria-hidden
     >
       {initials}

@@ -1,106 +1,105 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 html, body {
-  background: #0b1330;
-  color: #f4f5fb;
+  background: #F8F5EC;
+  color: #1A1F1B;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 body {
   font-family: Inter, system-ui, -apple-system, sans-serif;
-  background-image: radial-gradient(1100px 500px at 50% -150px, #1a2353 0%, #0b1330 60%);
+  background-image: radial-gradient(900px 600px at 70% -100px, #FFFFFF 0%, #F8F5EC 65%);
   background-attachment: fixed;
   min-height: 100vh;
+  letter-spacing: -0.005em;
 }
 
-/* Premium serif numeral display — used for hero money figures.
-   Cormorant Garamond renders gracefully at large sizes and gives the
-   "scorecard / country club" feel. */
-.serif {
-  font-family: 'Cormorant Garamond', Garamond, Georgia, serif;
-  font-feature-settings: "lnum" 1, "tnum" 1;
-  letter-spacing: -0.01em;
+/* Bold display weights for hero numerals — replaces decorative serif.
+   Tabular-nums keeps columns of dollar amounts aligned. */
+.display {
+  font-family: Inter, system-ui, sans-serif;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.035em;
 }
 
-.eyebrow { @apply text-[11px] font-medium tracking-[0.18em] uppercase text-ink-muted; }
+.eyebrow { @apply text-[10px] font-semibold tracking-[0.16em] uppercase text-ink-muted; }
 
-.btn { @apply inline-flex items-center justify-center rounded-full px-5 py-3.5 text-sm font-medium transition; }
-.btn-primary { @apply btn bg-ink text-bg hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed; }
-.btn-accent { @apply btn bg-accent text-bg hover:bg-accent-dim disabled:opacity-40 disabled:cursor-not-allowed; }
-.btn-secondary { @apply btn border border-line bg-white/[0.03] text-ink hover:bg-white/[0.06]; }
+.btn { @apply inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-medium transition; }
+.btn-primary { @apply btn bg-ink text-bg hover:bg-ink/90 disabled:opacity-40 disabled:cursor-not-allowed; }
+.btn-accent { @apply btn bg-accent text-rolex-ink hover:bg-accent-dim disabled:opacity-40 disabled:cursor-not-allowed; }
+.btn-secondary { @apply btn border border-line bg-bg-elevated text-ink hover:border-line-strong; }
 .btn-ghost { @apply btn text-ink-muted hover:text-ink; }
 
-.card { @apply bg-bg-elevated border border-line rounded-2xl p-4; }
-.card-hero {
-  @apply rounded-3xl p-6 border border-line/60 relative overflow-hidden;
-  background-image: linear-gradient(160deg, #1c2657 0%, #0d1432 100%);
+.card {
+  @apply bg-bg-elevated border border-line rounded-2xl p-4;
+  box-shadow: 0 1px 2px rgba(26,31,27,0.04), 0 8px 24px -12px rgba(26,31,27,0.06);
 }
-/* Rolex-green money hero — reserved for career earnings + total-to-settle.
-   The faint top sheen + gold edge evoke a leather-bound ledger. */
+.card-hero {
+  @apply rounded-3xl p-6 border border-line/60 bg-bg-elevated relative overflow-hidden;
+  box-shadow: 0 1px 2px rgba(26,31,27,0.04), 0 12px 32px -16px rgba(26,31,27,0.10);
+}
+/* Rolex-green money hero — still the centerpiece, now against light surroundings. */
 .card-money {
   @apply rounded-3xl p-6 relative overflow-hidden;
   background-image: linear-gradient(165deg, #15523B 0%, #0A2D20 100%);
-  border: 1px solid rgba(201, 169, 97, 0.18);
-  box-shadow: 0 16px 40px -8px rgba(14,59,42,0.6),
-              inset 0 1px 0 rgba(255,255,255,0.06);
+  border: 1px solid rgba(201,169,97,0.22);
+  box-shadow: 0 16px 40px -8px rgba(14,59,42,0.35),
+              inset 0 1px 0 rgba(255,255,255,0.08);
 }
 .card-money::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 85% 10%, rgba(201,169,97,0.08), transparent 60%);
+  background: radial-gradient(circle at 85% 10%, rgba(201,169,97,0.10), transparent 60%);
   pointer-events: none;
 }
 
-/* Status pill — used on round cards. */
+.input {
+  @apply w-full rounded-xl border border-line bg-bg-elevated px-3 py-2.5 text-ink placeholder:text-ink-faint outline-none transition;
+  -webkit-appearance: none;
+  appearance: none;
+  min-width: 0;
+}
+.input:focus { @apply border-accent/60 bg-bg-elevated; box-shadow: 0 0 0 3px rgba(21,82,59,0.10); }
+.input[type="date"] { min-height: 2.75rem; }
+.input[type="date"]::-webkit-date-and-time-value { text-align: left; }
+.label { @apply block text-xs font-medium text-ink-muted mb-1.5 uppercase tracking-wider; }
+
+/* Segmented pill */
+.seg-group {
+  @apply flex items-center gap-1 p-1 rounded-full bg-bg-sunken border border-line;
+}
+.seg {
+  @apply flex-1 rounded-full py-2 text-sm font-medium text-ink-muted transition;
+}
+.seg-active { @apply bg-bg-elevated text-ink shadow-card; }
+
+/* Transaction-style row */
+.row {
+  @apply flex items-center gap-3 py-3;
+}
+.row-icon {
+  @apply shrink-0 w-11 h-11 rounded-full flex items-center justify-center text-base bg-bg-sunken border border-line text-ink;
+}
+
+/* Status pills */
 .status-pill {
   @apply inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium tracking-wide;
 }
-.status-open    { @apply bg-white/[0.06] text-ink-muted; }
+.status-open    { @apply bg-bg-sunken text-ink-muted; }
 .status-pending { @apply bg-amber/15 text-amber; }
-.status-settled { @apply bg-accent/15 text-accent; }
+.status-settled { @apply bg-accent/10 text-accent; }
 .status-dot { @apply w-1.5 h-1.5 rounded-full; }
 .status-dot-open    { @apply bg-ink-muted; }
 .status-dot-pending { @apply bg-amber animate-pulse; }
 .status-dot-settled { @apply bg-accent; }
 
-.input {
-  @apply w-full rounded-xl border border-line bg-white/[0.03] px-3 py-2.5 text-ink placeholder:text-ink-faint outline-none transition;
-  -webkit-appearance: none;
-  appearance: none;
-  min-width: 0;
-}
-.input:focus { @apply border-accent/60 bg-white/[0.05]; }
-.input[type="date"] { min-height: 2.75rem; }
-.input[type="date"]::-webkit-date-and-time-value { text-align: left; }
-.input[type="date"]::-webkit-calendar-picker-indicator {
-  filter: invert(0.7);
-  cursor: pointer;
-  margin-left: auto;
-}
-.label { @apply block text-xs font-medium text-ink-muted mb-1.5 uppercase tracking-wider; }
-
-/* segmented pill */
-.seg-group {
-  @apply flex items-center gap-1 p-1 rounded-full bg-white/[0.05] border border-line;
-}
-.seg {
-  @apply flex-1 rounded-full py-2.5 text-sm font-medium text-ink-muted transition;
-}
-.seg-active { @apply bg-ink text-bg; }
-
-/* transaction-style row */
-.row {
-  @apply flex items-center gap-3 py-3;
-}
-.row-icon {
-  @apply shrink-0 w-11 h-11 rounded-full flex items-center justify-center text-base bg-white/[0.06] border border-line;
-}
-
-input[type="date"] { color-scheme: dark; }
+input[type="date"] { color-scheme: light; }
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 input[type="number"] { -moz-appearance: textfield; }

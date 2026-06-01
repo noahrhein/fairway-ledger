@@ -5,34 +5,39 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        bg: { DEFAULT: '#0b1330', elevated: '#141c3d', sunken: '#080d24' },
-        ink: { DEFAULT: '#f4f5fb', muted: '#8b93b8', faint: '#525a7d' },
-        line: { DEFAULT: 'rgba(255,255,255,0.07)', strong: 'rgba(255,255,255,0.13)' },
-        accent: { DEFAULT: '#9bd47b', dim: '#6fae50', soft: 'rgba(155,212,123,0.15)' },
-        amber: { DEFAULT: '#d4a55a' },
-        // Rolex green family — used for money displays + "settled" status.
+        // Light "scorecard" theme. Warm off-white surfaces, near-black ink.
+        bg:       { DEFAULT: '#F8F5EC', elevated: '#FFFFFF', sunken: '#EFEADB' },
+        ink:      { DEFAULT: '#1A1F1B', muted: '#5C6660', faint: '#98A199' },
+        line:     { DEFAULT: 'rgba(26,31,27,0.08)', strong: 'rgba(26,31,27,0.16)' },
+        // Rolex green is now the *only* color accent. Used for actions + winning amounts.
+        accent:   { DEFAULT: '#15523B', dim: '#0E3B2A', soft: 'rgba(21,82,59,0.10)' },
+        // Soft rust for losses; gold for highlights on the green hero.
+        loss:     '#B05A3C',
+        amber:    { DEFAULT: '#B05A3C' },
         rolex: {
-          DEFAULT: '#0E3B2A',   // deep money green
-          dim: '#0A2D20',       // darker variant for shadows
-          edge: '#1A5A3F',      // brighter edge for borders
-          ink: '#F4EDDF',       // cream for text on green
-          gold: '#C9A961',      // muted gold accent
+          DEFAULT: '#0E3B2A',
+          dim:     '#0A2D20',
+          edge:    '#1A5A3F',
+          ink:     '#F4EDDF',
+          gold:    '#C9A961',
+          loss:    '#E8A37C',  // lighter peach for negatives on green — far more readable than the cream-bg rust.
         },
-        // Warm rust amber for losses — easier on the eye than pure yellow.
-        loss: '#C28A4A',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-        serif: ['"Cormorant Garamond"', 'Garamond', 'Georgia', 'serif'],
+        // Display weights of Inter for hero numerals. Use `font-display` className.
+        display: ['"Inter Display"', 'Inter', 'system-ui', 'sans-serif'],
       },
       backgroundImage: {
-        'hero-card': 'linear-gradient(160deg, #1c2657 0%, #0d1432 100%)',
+        // Subtle cream-on-cream gradient — like aged scorecard paper.
+        'page': 'radial-gradient(900px 600px at 70% -100px, #FFFFFF 0%, #F8F5EC 65%)',
+        'hero-card': 'linear-gradient(160deg, #FFFFFF 0%, #F4EFE0 100%)',
         'hero-green': 'linear-gradient(165deg, #15523B 0%, #0A2D20 100%)',
-        'page': 'radial-gradient(1100px 500px at 50% -150px, #1a2353 0%, #0b1330 60%)',
       },
       boxShadow: {
-        'pill': '0 6px 20px rgba(0,0,0,0.35)',
-        'green-glow': '0 16px 40px -8px rgba(14,59,42,0.6)',
+        'pill': '0 8px 24px -8px rgba(26,31,27,0.18)',
+        'card': '0 1px 2px rgba(26,31,27,0.04), 0 8px 24px -12px rgba(26,31,27,0.10)',
+        'green-glow': '0 16px 40px -8px rgba(14,59,42,0.35)',
       },
     },
   },
