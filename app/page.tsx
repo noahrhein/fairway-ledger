@@ -210,11 +210,11 @@ function DashboardMock() {
     <div className="text-[8px]">
       <MockHeader title="Ledger" />
       <div className="px-2">
-        <div className="card-money rounded-xl p-2.5 relative">
+        <div className="card-money rounded-2xl p-3 relative text-center">
           <div className="relative z-10">
-            <div className="text-[6px] uppercase tracking-[0.15em] text-rolex-ink/60 font-semibold">Career</div>
-            <div className="mt-1 display text-rolex-gold text-[20px] leading-none">+$284</div>
-            <div className="mt-1 text-[6px] text-rolex-ink/70">8 rounds on the books</div>
+            <div className="text-[6px] uppercase tracking-[0.18em] text-rolex-ink/60 font-semibold">Career</div>
+            <div className="mt-1.5 display text-rolex-gold text-[26px] leading-none">+$284</div>
+            <div className="mt-1.5 text-[6px] text-rolex-ink/70">8 rounds on the books</div>
           </div>
         </div>
         <div className="mt-2 space-y-1.5">
@@ -285,11 +285,11 @@ function SettleMock() {
     <div className="text-[8px]">
       <MockHeader title="Settle up" />
       <div className="px-2">
-        <div className="card-money rounded-xl p-2.5 relative">
+        <div className="card-money rounded-2xl p-3 relative text-center">
           <div className="relative z-10">
-            <div className="text-[6px] uppercase tracking-[0.15em] text-rolex-ink/60 font-semibold">Total</div>
-            <div className="mt-1 display text-rolex-ink text-[20px] leading-none">$45.00</div>
-            <div className="mt-1 text-[6px] text-rolex-ink/70">2 payouts</div>
+            <div className="text-[6px] uppercase tracking-[0.18em] text-rolex-ink/60 font-semibold">Total</div>
+            <div className="mt-1.5 display text-rolex-ink text-[26px] leading-none">$45.00</div>
+            <div className="mt-1.5 text-[6px] text-rolex-ink/70">2 payouts</div>
           </div>
         </div>
         <div className="mt-2 space-y-1.5">
