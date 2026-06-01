@@ -41,10 +41,10 @@ export default function LeaderboardPage() {
       <section className="card-money">
         <div className="relative z-10">
           <div className="eyebrow text-rolex-ink/60">Your record</div>
-          <div className="mt-3 serif text-6xl font-medium leading-none">
+          <div className="mt-3 display text-6xl font-medium leading-none">
             <span className={
               you && you.net > 0 ? 'text-rolex-gold'
-              : you && you.net < 0 ? 'text-loss'
+              : you && you.net < 0 ? 'text-rolex-loss'
               : 'text-rolex-ink'
             }>
               {you ? (you.net > 0 ? '+' : you.net < 0 ? '−' : '') : ''}${you ? Math.abs(you.net).toFixed(2) : '0.00'}
@@ -93,7 +93,7 @@ export default function LeaderboardPage() {
               const negative = entry.net < 0;
               return (
                 <li key={entry.key} className="row">
-                  <div className={`row-icon text-sm font-medium ${i === 0 ? 'serif text-rolex-gold border-rolex-gold/40' : ''}`}>
+                  <div className={`row-icon text-sm font-medium ${i === 0 ? 'display text-rolex-gold border-rolex-gold/40' : ''}`}>
                     {i + 1}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -103,7 +103,7 @@ export default function LeaderboardPage() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className={`serif text-xl font-medium leading-none ${positive ? 'text-accent' : negative ? 'text-loss' : 'text-ink-muted'}`}>
+                    <div className={`display text-xl font-medium leading-none ${positive ? 'text-accent' : negative ? 'text-loss' : 'text-ink-muted'}`}>
                       {positive ? '+' : negative ? '−' : ''}${Math.abs(entry.net).toFixed(0)}
                     </div>
                     <div className="text-[10px] uppercase tracking-wider text-ink-faint mt-1">

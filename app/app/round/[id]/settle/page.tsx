@@ -52,7 +52,7 @@ export default function SettlePage() {
       <section className="card-money">
         <div className="relative z-10">
           <div className="eyebrow text-rolex-ink/60">Total to settle</div>
-          <div className="mt-3 serif text-6xl font-medium leading-none text-rolex-ink">
+          <div className="mt-3 display text-6xl font-medium leading-none text-rolex-ink">
             ${totalSettled.toFixed(2)}
           </div>
           <div className="mt-3 text-sm text-rolex-ink/70">

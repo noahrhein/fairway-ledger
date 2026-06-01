@@ -20,6 +20,7 @@ const config: Config = {
           edge:    '#1A5A3F',
           ink:     '#F4EDDF',
           gold:    '#C9A961',
+          loss:    '#E8A37C',  // lighter peach for negatives on green — far more readable than the cream-bg rust.
         },
       },
       fontFamily: {

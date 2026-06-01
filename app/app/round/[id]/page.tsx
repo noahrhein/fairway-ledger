@@ -150,7 +150,7 @@ function ClubCrest({ course }: { course: string }) {
   return (
     <div
       aria-hidden
-      className="shrink-0 w-16 h-16 rounded-full flex items-center justify-center serif font-semibold text-xl text-rolex-gold border border-rolex-gold/40 bg-rolex/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]"
+      className="shrink-0 w-16 h-16 rounded-full flex items-center justify-center display font-semibold text-xl text-rolex-gold border border-rolex-gold/40 bg-rolex/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]"
     >
       {initials}
     </div>
