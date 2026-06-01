@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
-import { getRound, saveRoundResults } from '../../../../lib/db';
-import type { Round, RoundResults } from '../../../../types';
+import { getRound, saveRoundResults } from '../../../../../lib/db';
+import type { Round, RoundResults } from '../../../../../types';
 
 export default function ScoreEntryPage() {
   const { id } = useParams<{ id: string }>();
@@ -22,7 +22,7 @@ export default function ScoreEntryPage() {
   if (!ready) return null;
   if (!round) return <p className="text-ink-muted">Round not found.</p>;
 
-  return <ScoreEntry round={round} onSaved={() => router.push(`/round/${round.id}/settle`)} />;
+  return <ScoreEntry round={round} onSaved={() => router.push(`/app/round/${round.id}/settle`)} />;
 }
 
 function ScoreEntry({ round, onSaved }: { round: Round; onSaved: () => void }) {
@@ -69,7 +69,7 @@ function ScoreEntry({ round, onSaved }: { round: Round; onSaved: () => void }) {
   return (
     <main className="space-y-6">
       <header>
-        <Link href={`/round/${round.id}`} className="btn-ghost -ml-3 mb-1">← {round.course}</Link>
+        <Link href={`/app/round/${round.id}`} className="btn-ghost -ml-3 mb-1">← {round.course}</Link>
         <h1 className="text-3xl font-medium tracking-tight">Enter results</h1>
       </header>
 

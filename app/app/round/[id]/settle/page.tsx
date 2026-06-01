@@ -3,9 +3,9 @@
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { getRound, togglePayout, getCurrentUser } from '../../../../lib/db';
-import { venmoChargeUrl } from '../../../../lib/venmo';
-import type { Round } from '../../../../types';
+import { getRound, togglePayout, getCurrentUser } from '../../../../../lib/db';
+import { venmoChargeUrl } from '../../../../../lib/venmo';
+import type { Round } from '../../../../../types';
 import { Flag, Check } from 'lucide-react';
 
 export default function SettlePage() {
@@ -46,7 +46,7 @@ export default function SettlePage() {
   return (
     <main className="space-y-6">
       <header>
-        <Link href={`/round/${round.id}`} className="btn-ghost -ml-3 mb-1 px-3 py-2">← {round.course}</Link>
+        <Link href={`/app/round/${round.id}`} className="btn-ghost -ml-3 mb-1 px-3 py-2">← {round.course}</Link>
       </header>
 
       <section className="card-money">
@@ -140,7 +140,7 @@ export default function SettlePage() {
         </section>
       )}
 
-      <Link href="/" className="btn-ghost block text-center text-xs">Back to home</Link>
+      <Link href="/app" className="btn-ghost block text-center text-xs">Back to home</Link>
     </main>
   );
 }

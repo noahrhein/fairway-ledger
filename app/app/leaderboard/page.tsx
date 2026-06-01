@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { getRounds, getCurrentUser } from '../../lib/db';
-import { computeLeaderboard } from '../../lib/leaderboard';
-import type { Round } from '../../types';
+import { getRounds, getCurrentUser } from '../../../lib/db';
+import { computeLeaderboard } from '../../../lib/leaderboard';
+import type { Round } from '../../../types';
 import { Trophy } from 'lucide-react';
 
 type SortKey = 'net' | 'rounds';

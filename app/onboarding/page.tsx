@@ -20,7 +20,7 @@ function OnboardingInner() {
   const supabase = createClient();
   const router = useRouter();
   const params = useSearchParams();
-  const next = params.get('next') ?? '/';
+  const next = params.get('next') ?? '/app';
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [name, setName] = useState('');

@@ -8,8 +8,8 @@ import {
   getProfile,
   searchUsers,
   type UserSearchHit,
-} from '../../lib/db';
-import type { Friend, Profile } from '../../types';
+} from '../../../lib/db';
+import type { Friend, Profile } from '../../../types';
 import { Check, Search, User } from 'lucide-react';
 
 export default function FriendsPage() {

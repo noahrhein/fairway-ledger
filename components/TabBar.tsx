@@ -5,18 +5,20 @@ import { usePathname } from 'next/navigation';
 import { Flag, Trophy, Users } from 'lucide-react';
 
 const tabs = [
-  { href: '/', label: 'Home', Icon: Flag },
-  { href: '/leaderboard', label: 'Leaderboard', Icon: Trophy },
-  { href: '/friends', label: 'Friends', Icon: Users },
+  { href: '/app', label: 'Home', Icon: Flag },
+  { href: '/app/leaderboard', label: 'Leaderboard', Icon: Trophy },
+  { href: '/app/friends', label: 'Friends', Icon: Users },
 ] as const;
 
-const HIDDEN_PREFIXES = ['/login', '/onboarding', '/share', '/auth'];
-
+/**
+ * The tab bar is only relevant inside the signed-in app shell. It's
+ * hidden on the landing, auth, onboarding, and share routes.
+ */
 export function TabBar() {
   const pathname = usePathname() ?? '/';
-  if (HIDDEN_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + '/'))) {
-    return null;
-  }
+  const isInApp = pathname === '/app' || pathname.startsWith('/app/');
+  if (!isInApp) return null;
+
   return (
     <nav
       className="fixed inset-x-0 bottom-0 z-50"
@@ -25,7 +27,7 @@ export function TabBar() {
       <div className="mx-auto max-w-[480px] px-4 pb-4 pt-2">
         <div className="flex items-center justify-around rounded-full border border-line bg-bg-elevated/95 backdrop-blur shadow-pill px-2 py-2">
           {tabs.map((t) => {
-            const active = t.href === '/' ? pathname === '/' : pathname.startsWith(t.href);
+            const active = t.href === '/app' ? pathname === '/app' : pathname.startsWith(t.href);
             const Icon = t.Icon;
             return (
               <Link

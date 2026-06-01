@@ -1,7 +1,8 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
-const PUBLIC_PATHS = ['/login', '/auth', '/share'];
+// Only /app/* is gated. Landing, /login, /auth, /share, /onboarding stay public.
+const APP_PREFIX = '/app';
 const ONBOARDING_PATH = '/onboarding';
 
 export async function updateSession(request: NextRequest) {
@@ -29,18 +30,18 @@ export async function updateSession(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
-  const isPublic = PUBLIC_PATHS.some((p) => path === p || path.startsWith(p + '/'));
+  const isAppRoute = path === APP_PREFIX || path.startsWith(APP_PREFIX + '/');
 
-  if (!user && !isPublic) {
+  // Only /app/* requires auth. Landing page and other roots are public.
+  if (!user && isAppRoute) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     url.searchParams.set('next', path);
     return NextResponse.redirect(url);
   }
 
-  // Force-redirect signed-in users to onboarding until they complete it.
-  // Allow them to access /onboarding itself, /auth/* (signout), and /share.
-  if (user && !isPublic && path !== ONBOARDING_PATH) {
+  // Force-redirect signed-in users to onboarding before they reach /app/*.
+  if (user && isAppRoute && path !== ONBOARDING_PATH) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('onboarded_at')
@@ -56,3 +57,4 @@ export async function updateSession(request: NextRequest) {
 
   return supabaseResponse;
 }
+

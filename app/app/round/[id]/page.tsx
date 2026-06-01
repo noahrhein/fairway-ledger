@@ -9,8 +9,8 @@ import {
   deleteSideBet,
   getRound,
   getCurrentUser,
-} from '../../../lib/db';
-import type { Round } from '../../../types';
+} from '../../../../lib/db';
+import type { Round } from '../../../../types';
 import { Share2, Check, Plus } from 'lucide-react';
 
 export default function RoundDetailPage() {
@@ -34,7 +34,7 @@ export default function RoundDetailPage() {
   if (!round) {
     return (
       <main className="space-y-4">
-        <Link href="/" className="btn-ghost">← Home</Link>
+        <Link href="/app" className="btn-ghost">← Home</Link>
         <p className="text-ink-muted">Round not found.</p>
       </main>
     );
@@ -67,7 +67,7 @@ export default function RoundDetailPage() {
   return (
     <main className="space-y-6">
       <header>
-        <Link href="/" className="btn-ghost -ml-3 mb-1">← Home</Link>
+        <Link href="/app" className="btn-ghost -ml-3 mb-1">← Home</Link>
       </header>
 
       <section className="card-hero">
@@ -108,12 +108,12 @@ export default function RoundDetailPage() {
       <div className="space-y-2">
         {!round.results ? (
           isOwner ? (
-            <Link href={`/round/${round.id}/score`} className="btn-primary w-full">Enter results</Link>
+            <Link href={`/app/round/${round.id}/score`} className="btn-primary w-full">Enter results</Link>
           ) : (
             <p className="text-sm text-ink-muted text-center py-4">Waiting for the host to enter results.</p>
           )
         ) : (
-          <Link href={`/round/${round.id}/settle`} className="btn-primary w-full">View payouts</Link>
+          <Link href={`/app/round/${round.id}/settle`} className="btn-primary w-full">View payouts</Link>
         )}
 
         <button onClick={handleShare} className="btn-secondary w-full inline-flex items-center justify-center gap-2">
@@ -127,7 +127,7 @@ export default function RoundDetailPage() {
           onClick={async () => {
             if (confirm('Delete this round?')) {
               await deleteRound(round.id);
-              router.push('/');
+              router.push('/app');
             }
           }}
           className="text-xs text-ink-faint hover:text-red-400 w-full text-center pt-4"

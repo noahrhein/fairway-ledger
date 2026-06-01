@@ -10,8 +10,8 @@ import {
   getFriends,
   getProfile,
   saveFriend,
-} from '../../../lib/db';
-import type { BetFormat, Friend } from '../../../types';
+} from '../../../../lib/db';
+import type { BetFormat, Friend } from '../../../../types';
 
 type FormatType = 'nassau' | 'skins' | 'wolf' | 'match';
 type Slot = { friendId: string | null; userId: string | null; name: string; venmo: string };
@@ -117,7 +117,7 @@ export default function NewRoundPage() {
       })),
     });
     setBusy(false);
-    if (round) router.push(`/round/${round.id}`);
+    if (round) router.push(`/app/round/${round.id}`);
   }
 
   const usedFriendIds = new Set(slots.map((s) => s.friendId).filter(Boolean) as string[]);
@@ -126,7 +126,7 @@ export default function NewRoundPage() {
   return (
     <main className="space-y-6">
       <header>
-        <Link href="/" className="btn-ghost -ml-3 mb-1 px-3 py-2">← Home</Link>
+        <Link href="/app" className="btn-ghost -ml-3 mb-1 px-3 py-2">← Home</Link>
         <h1 className="text-3xl font-medium tracking-tight">New round</h1>
       </header>
 

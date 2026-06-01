@@ -39,14 +39,14 @@ export default function SharePage() {
     return (
       <main className="space-y-4 pt-12 text-center">
         <p className="text-ink-muted">This share link is invalid or the round was removed.</p>
-        <Link href="/" className="btn-ghost">Back to home</Link>
+        <Link href="/app" className="btn-ghost">Back to home</Link>
       </main>
     );
   }
 
   const alreadyIn = preview.players.find((p) => p.userId === userId);
   if (alreadyIn) {
-    router.replace(`/round/${preview.id}`);
+    router.replace(`/app/round/${preview.id}`);
     return null;
   }
 
@@ -61,7 +61,7 @@ export default function SharePage() {
       setPreview(p);
       return;
     }
-    router.replace(`/round/${preview!.id}`);
+    router.replace(`/app/round/${preview!.id}`);
   }
 
   const fmt = preview.format;
